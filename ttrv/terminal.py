@@ -37,11 +37,13 @@ try:
     from html import unescape
 except ImportError:
     from six.moves import html_parser
+
     unescape = html_parser.HTMLParser().unescape
 
-if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform == 'darwin':
+if sys.version_info[0] == 3 and sys.version_info[1] >= 8 and sys.platform == "darwin":
     from multiprocessing import set_start_method
-    set_start_method('fork')
+
+    set_start_method("fork")
 
 _logger = logging.getLogger(__name__)
 
@@ -66,31 +68,31 @@ class Terminal(object):
 
         self._display = None
         self._mailcap_dict = mailcap.getcaps()
-        self._term = os.environ.get('TERM')
+        self._term = os.environ.get("TERM")
 
         # This is a hack, the MIME parsers should be stateless
         # but we need to load the imgur credentials from the config
-        mime_parsers.ImgurApiMIMEParser.CLIENT_ID = config['imgur_client_id']
+        mime_parsers.ImgurApiMIMEParser.CLIENT_ID = config["imgur_client_id"]
 
     @property
     def up_arrow(self):
-        return '^' if self.config['ascii'] else '▲'
+        return "^" if self.config["ascii"] else "▲"
 
     @property
     def down_arrow(self):
-        return 'v' if self.config['ascii'] else '▼'
+        return "v" if self.config["ascii"] else "▼"
 
     @property
     def neutral_arrow(self):
-        return 'o' if self.config['ascii'] else '•'
+        return "o" if self.config["ascii"] else "•"
 
     @property
     def gilded(self):
-        return '*' if self.config['ascii'] else '✪'
+        return "*" if self.config["ascii"] else "✪"
 
     @property
     def vline(self):
-        return getattr(curses, 'ACS_VLINE', ord('|'))
+        return getattr(curses, "ACS_VLINE", ord("|"))
 
     @property
     def display(self):
@@ -100,7 +102,7 @@ class Terminal(object):
         """
 
         if self._display is None:
-            if sys.platform == 'darwin':
+            if sys.platform == "darwin":
                 # OS X won't set $DISPLAY unless xQuartz is installed.
                 # If you're using OS X and you want to access a terminal
                 # browser, you need to set it manually via $BROWSER.
@@ -111,8 +113,14 @@ class Terminal(object):
 
             # Use the convention defined here to parse $BROWSER
             # https://docs.python.org/2/library/webbrowser.html
-            console_browsers = ['www-browser', 'links', 'links2', 'elinks',
-                                'lynx', 'w3m']
+            console_browsers = [
+                "www-browser",
+                "links",
+                "links2",
+                "elinks",
+                "lynx",
+                "w3m",
+            ]
             if "BROWSER" in os.environ:
                 user_browser = os.environ["BROWSER"].split(os.pathsep)[0]
                 if user_browser in console_browsers:
@@ -127,7 +135,7 @@ class Terminal(object):
         """
         Flash the screen to indicate that an action was invalid.
         """
-        if self.config['flash']:
+        if self.config["flash"]:
             return curses.flash()
         else:
             return None
@@ -199,11 +207,11 @@ class Terminal(object):
         """
 
         if likes is None:
-            return self.neutral_arrow, self.attr('NeutralVote')
+            return self.neutral_arrow, self.attr("NeutralVote")
         elif likes:
-            return self.up_arrow, self.attr('Upvote')
+            return self.up_arrow, self.attr("Upvote")
         else:
-            return self.down_arrow, self.attr('Downvote')
+            return self.down_arrow, self.attr("Downvote")
 
     def clean(self, string, n_cols=None):
         """
@@ -235,21 +243,21 @@ class Terminal(object):
         """
 
         if n_cols is not None and n_cols <= 0:
-            return ''
+            return ""
 
         if isinstance(string, six.text_type):
             string = unescape(string)
 
-        if self.config['ascii']:
+        if self.config["ascii"]:
             if isinstance(string, six.binary_type):
-                string = string.decode('utf-8')
-            string = string.encode('ascii', 'replace')
+                string = string.decode("utf-8")
+            string = string.encode("ascii", "replace")
             return string[:n_cols] if n_cols else string
         else:
             if n_cols:
                 string = textual_width_chop(string, n_cols)
             if isinstance(string, six.text_type):
-                string = string.encode('utf-8')
+                string = string.encode("utf-8")
             return string
 
     def add_line(self, window, text, row=None, col=None, attr=None):
@@ -284,7 +292,7 @@ class Terminal(object):
             # Curses handling of strings with invalid null bytes (b'\00')
             #   python 2: TypeError: "int,int,str"
             #   python 3: ValueError: "embedded null byte"
-            _logger.warning('add_line raised an exception')
+            _logger.warning("add_line raised an exception")
             _logger.exception(str(e))
 
     @staticmethod
@@ -300,9 +308,9 @@ class Terminal(object):
             # Trying to draw outside of the screen bounds
             return
 
-        window.addstr(row, col, ' ')
+        window.addstr(row, col, " ")
 
-    def show_notification(self, message, timeout=None, style='Info'):
+    def show_notification(self, message, timeout=None, style="Info"):
         """
         Overlay a message box on the center of the screen and wait for input.
 
@@ -314,7 +322,7 @@ class Terminal(object):
                 notification window
         """
 
-        assert style in ('Info', 'Warning', 'Error', 'Success')
+        assert style in ("Info", "Warning", "Error", "Success")
 
         if isinstance(message, six.string_types):
             message = message.splitlines()
@@ -328,13 +336,13 @@ class Terminal(object):
         # Cut off the lines of the message that don't fit on the screen
         box_width = min(box_width, n_cols)
         box_height = min(box_height, n_rows)
-        message = message[:box_height - 2]
+        message = message[: box_height - 2]
 
         s_row = (n_rows - box_height) // 2 + v_offset
         s_col = (n_cols - box_width) // 2 + h_offset
 
         window = curses.newwin(box_height, box_width, s_row, s_col)
-        window.bkgd(str(' '), self.attr('Notice{0}'.format(style)))
+        window.bkgd(str(" "), self.attr("Notice{0}".format(style)))
         window.erase()
         window.border()
 
@@ -367,15 +375,15 @@ class Terminal(object):
         n = 0
         while n in range(len(link_pages)):
             link_page = link_pages[n]
-            text = 'Select a link to open (page {} of {}):\n\n'
-            text = text.format(n+1, len(link_pages))
+            text = "Select a link to open (page {} of {}):\n\n"
+            text = text.format(n + 1, len(link_pages))
             text += self.get_link_page_text(link_page)
             if link_page is not link_pages[-1]:
-                text += '[j] next page...'
+                text += "[j] next page..."
             if link_page is not link_pages[0]:
                 if link_page is not link_pages[-1]:
-                    text += '\n'
-                text += '[k] ...previous page'
+                    text += "\n"
+                text += "[k] ...previous page"
 
             try:
                 choice = chr(self.show_notification(text))
@@ -385,17 +393,17 @@ class Terminal(object):
                     pass
             except ValueError:
                 return None
-            if choice == 'j':
+            if choice == "j":
                 if link_page is not link_pages[-1]:
                     n += 1
                 continue
-            elif choice == 'k':
+            elif choice == "k":
                 if link_page is not link_pages[0]:
                     n -= 1
                 continue
             elif choice not in range(len(link_page)):
                 return None
-            return link_page[choice]['href']
+            return link_page[choice]["href"]
 
     @staticmethod
     def get_link_pages(links):
@@ -418,11 +426,12 @@ class Terminal(object):
         """
         Construct the dialog box to display a list of links to the user.
         """
-        text = ''
+        text = ""
         for i, link in enumerate(link_page):
-            capped_link_text = (link['text'] if len(link['text']) <= 20
-                                else link['text'][:19] + '…')
-            text += '[{}] [{}]({})\n'.format(i, capped_link_text, link['href'])
+            capped_link_text = (
+                link["text"] if len(link["text"]) <= 20 else link["text"][:19] + "…"
+            )
+            text += "[{}] [{}]({})\n".format(i, capped_link_text, link["href"])
         return text
 
     def open_link(self, url):
@@ -452,44 +461,52 @@ class Terminal(object):
             ...anything is possible!
         """
 
-        if not self.config['enable_media']:
+        if not self.config["enable_media"]:
             self.open_browser(url)
             return
 
         try:
-            with self.loader('Checking link', catch_exception=False):
+            with self.loader("Checking link", catch_exception=False):
                 command, entry = self.get_mailcap_entry(url)
         except exceptions.MailcapEntryNotFound:
             self.open_browser(url)
             return
 
-        _logger.info('Executing command: %s', command)
-        needs_terminal = 'needsterminal' in entry
-        copious_output = 'copiousoutput' in entry
+        _logger.info("Executing command: %s", command)
+        needs_terminal = "needsterminal" in entry
+        copious_output = "copiousoutput" in entry
 
         if needs_terminal or copious_output:
             # Blocking, pause ttrv until the process returns
             with self.suspend():
-                os.system('clear')
+                os.system("clear")
                 p = subprocess.Popen(
-                    [command], stderr=subprocess.PIPE,
-                    universal_newlines=True, shell=True)
+                    [command],
+                    stderr=subprocess.PIPE,
+                    universal_newlines=True,
+                    shell=True,
+                )
                 _, stderr = p.communicate()
                 if copious_output:
-                    six.moves.input('Press any key to continue')
+                    six.moves.input("Press any key to continue")
             code = p.poll()
             if code != 0:
                 _logger.warning(stderr)
                 self.show_notification(
-                    'Program exited with status={0}\n{1}'.format(
-                        code, stderr.strip()), style='Error')
+                    "Program exited with status={0}\n{1}".format(code, stderr.strip()),
+                    style="Error",
+                )
 
         else:
             # Non-blocking, open a background process
-            with self.loader('Opening page', delay=0):
+            with self.loader("Opening page", delay=0):
                 p = subprocess.Popen(
-                    [command], shell=True, universal_newlines=True,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    [command],
+                    shell=True,
+                    universal_newlines=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
                 # Wait a little while to make sure that the command doesn't
                 # exit with an error. This isn't perfect, but it should be good
                 # enough to catch invalid commands.
@@ -498,8 +515,10 @@ class Terminal(object):
                 if code is not None and code != 0:
                     _, stderr = p.communicate()
                     raise exceptions.BrowserError(
-                        'Program exited with status={0}\n{1}'.format(
-                            code, stderr.strip()))
+                        "Program exited with status={0}\n{1}".format(
+                            code, stderr.strip()
+                        )
+                    )
 
                 # Spin off a thread with p.communicate() to avoid subprocess
                 # hang when the stodout/stderr PIPE gets filled up. This
@@ -535,20 +554,21 @@ class Terminal(object):
                 except Exception as e:
                     # If Imgur decides to change its html layout, let it fail
                     # silently in the background instead of crashing.
-                    _logger.warning('parser %s raised an exception', parser)
+                    _logger.warning("parser %s raised an exception", parser)
                     _logger.exception(e)
                     raise exceptions.MailcapEntryNotFound()
                 if not content_type:
-                    _logger.info('Content type could not be determined')
+                    _logger.info("Content type could not be determined")
                     raise exceptions.MailcapEntryNotFound()
-                elif content_type == 'text/html':
-                    _logger.info('Content type text/html, deferring to browser')
+                elif content_type == "text/html":
+                    _logger.info("Content type text/html, deferring to browser")
                     raise exceptions.MailcapEntryNotFound()
 
                 command, entry = mailcap.findmatch(
-                    self._mailcap_dict, content_type, filename=modified_url)
+                    self._mailcap_dict, content_type, filename=modified_url
+                )
                 if not entry:
-                    _logger.info('Could not find a valid mailcap entry')
+                    _logger.info("Could not find a valid mailcap entry")
                     raise exceptions.MailcapEntryNotFound()
 
                 return command, entry
@@ -584,7 +604,7 @@ class Terminal(object):
         """
 
         if self.display:
-            with self.loader('Opening page in a new window'):
+            with self.loader("Opening page in a new window"):
 
                 def open_url_silent(url):
                     # This used to be done using subprocess.Popen().
@@ -602,7 +622,7 @@ class Terminal(object):
                     try:
                         os.dup2(null, 1)
                         os.dup2(null, 2)
-                        if self.config['force_new_browser_window']:
+                        if self.config["force_new_browser_window"]:
                             webbrowser.open_new(url)
                         else:
                             webbrowser.open_new_tab(url)
@@ -623,7 +643,8 @@ class Terminal(object):
                     p.join(7)
                     if p.is_alive():
                         raise exceptions.BrowserError(
-                            'Timeout waiting for browser to open')
+                            "Timeout waiting for browser to open"
+                        )
                 finally:
                     # This will be hit on the browser timeout, but also if the
                     # user presses the ESC key. We always want to kill the
@@ -635,7 +656,7 @@ class Terminal(object):
                         pass
         else:
             with self.suspend():
-                if self.config['force_new_browser_window']:
+                if self.config["force_new_browser_window"]:
                     webbrowser.open_new(url)
                 else:
                     webbrowser.open_new_tab(url)
@@ -650,29 +671,29 @@ class Terminal(object):
         The data string will be piped directly to the pager.
         """
 
-        pager = os.getenv('TTRV_PAGER')
+        pager = os.getenv("TTRV_PAGER")
         if pager is None:
-            pager = os.getenv('PAGER') or 'less'
+            pager = os.getenv("PAGER") or "less"
         command = shlex.split(pager)
 
         if wrap:
             data_lines = content.Content.wrap_text(data, wrap)
-            data = '\n'.join(data_lines)
+            data = "\n".join(data_lines)
 
         try:
             with self.suspend():
-                _logger.debug('Running command: %s', command)
+                _logger.debug("Running command: %s", command)
                 p = subprocess.Popen(command, stdin=subprocess.PIPE)
                 try:
-                    p.communicate(data.encode('utf-8'))
+                    p.communicate(data.encode("utf-8"))
                 except KeyboardInterrupt:
                     p.terminate()
         except OSError as e:
             _logger.exception(e)
-            self.show_notification('Could not open pager %s' % pager)
+            self.show_notification("Could not open pager %s" % pager)
 
     @contextmanager
-    def open_editor(self, data=''):
+    def open_editor(self, data=""):
         """
         Open a file for editing using the system's default editor.
 
@@ -690,23 +711,25 @@ class Terminal(object):
             text (str): The text that the user entered into the editor.
         """
 
-        with NamedTemporaryFile(prefix='ttrv_', suffix='.txt', delete=False) as fp:
+        with NamedTemporaryFile(prefix="ttrv_", suffix=".txt", delete=False) as fp:
             # Create a tempory file and grab the name, but close immediately so
             # we can re-open using the right encoding
             filepath = fp.name
 
-        with codecs.open(filepath, 'w', 'utf-8') as fp:
+        with codecs.open(filepath, "w", "utf-8") as fp:
             fp.write(data)
-        _logger.info('File created: %s', filepath)
+        _logger.info("File created: %s", filepath)
 
-        editor = (os.getenv('TTRV_EDITOR') or
-                  os.getenv('VISUAL') or
-                  os.getenv('EDITOR') or
-                  'nano')
+        editor = (
+            os.getenv("TTRV_EDITOR")
+            or os.getenv("VISUAL")
+            or os.getenv("EDITOR")
+            or "nano"
+        )
         command = shlex.split(editor) + [filepath]
         try:
             with self.suspend():
-                _logger.debug('Running command: %s', command)
+                _logger.debug("Running command: %s", command)
                 p = subprocess.Popen(command)
                 try:
                     p.communicate()
@@ -714,9 +737,9 @@ class Terminal(object):
                     p.terminate()
         except OSError as e:
             _logger.exception(e)
-            self.show_notification('Could not open file with %s' % editor)
+            self.show_notification("Could not open file with %s" % editor)
 
-        with codecs.open(filepath, 'r', 'utf-8') as fp:
+        with codecs.open(filepath, "r", "utf-8") as fp:
             text = fp.read()
             text = self.strip_instructions(text)
 
@@ -725,16 +748,16 @@ class Terminal(object):
         except exceptions.TemporaryFileError:
             # All exceptions will cause the file to *not* be removed, but these
             # ones should also be swallowed
-            _logger.info('Caught TemporaryFileError')
-            self.show_notification('Post saved as: %s' % filepath)
+            _logger.info("Caught TemporaryFileError")
+            self.show_notification("Post saved as: %s" % filepath)
         else:
             # If no errors occurred, try to remove the file
             try:
                 os.remove(filepath)
             except OSError:
-                _logger.warning('Could not delete: %s', filepath)
+                _logger.warning("Could not delete: %s", filepath)
             else:
-                _logger.info('File deleted: %s', filepath)
+                _logger.info("File deleted: %s", filepath)
 
     def open_urlview(self, data):
         """
@@ -743,14 +766,14 @@ class Terminal(object):
         web browser.
         """
 
-        urlview = os.getenv('TTRV_URLVIEWER') or 'urlview'
+        urlview = os.getenv("TTRV_URLVIEWER") or "urlview"
         command = shlex.split(urlview)
         try:
             with self.suspend():
-                _logger.debug('Running command: %s', command)
+                _logger.debug("Running command: %s", command)
                 p = subprocess.Popen(command, stdin=subprocess.PIPE)
                 try:
-                    p.communicate(input=data.encode('utf-8'))
+                    p.communicate(input=data.encode("utf-8"))
                 except KeyboardInterrupt:
                     p.terminate()
 
@@ -761,12 +784,11 @@ class Terminal(object):
                     sys.stdout.flush()
 
             if code == 1:
-                self.show_notification('No URLs found')
+                self.show_notification("No URLs found")
 
         except OSError as e:
             _logger.exception(e)
-            self.show_notification(
-                'Failed to open {0}'.format(urlview))
+            self.show_notification("Failed to open {0}".format(urlview))
 
     def text_input(self, window, allow_resize=False):
         """
@@ -805,7 +827,7 @@ class Terminal(object):
         try:
             out = textbox.edit(validate=validate)
             if isinstance(out, six.binary_type):
-                out = out.decode('utf-8')
+                out = out.decode("utf-8")
         except exceptions.EscapeInterrupt:
             out = None
 
@@ -825,7 +847,7 @@ class Terminal(object):
 
         n_rows, n_cols = self.stdscr.getmaxyx()
         v_offset, h_offset = self.stdscr.getbegyx()
-        ch, attr = str(' '), self.attr('Prompt')
+        ch, attr = str(" "), self.attr("Prompt")
         prompt = self.clean(prompt, n_cols - 1)
 
         # Create a new window to draw the text at the bottom of the screen,
@@ -869,9 +891,9 @@ class Terminal(object):
         """
 
         ch = self.prompt_input(prompt, key=True)
-        if ch in (ord('Y'), ord('y')):
+        if ch in (ord("Y"), ord("y")):
             return True
-        elif ch in (ord('N'), ord('n'), None):
+        elif ch in (ord("N"), ord("n"), None):
             return False
         else:
             self.flash()
@@ -888,16 +910,16 @@ class Terminal(object):
             return text
 
         # Trivial case where the textbox is only one line long.
-        if '\n' not in text:
+        if "\n" not in text:
             return text.rstrip()
 
         # Allow one space at the end of the line. If there is more than one
         # space, assume that a newline operation was intended by the user
-        stack, current_line = [], ''
-        for line in text.split('\n'):
-            if line.endswith('  ') or not line:
+        stack, current_line = [], ""
+        for line in text.split("\n"):
+            if line.endswith("  ") or not line:
                 stack.append(current_line + line.rstrip())
-                current_line = ''
+                current_line = ""
             else:
                 current_line += line
         stack.append(current_line)
@@ -909,7 +931,7 @@ class Terminal(object):
             else:
                 break
 
-        out = '\n'.join(stack)
+        out = "\n".join(stack)
         return out
 
     @staticmethod
@@ -922,9 +944,9 @@ class Terminal(object):
         """
         # Pattern can span multiple lines, allows dot to match newline chars
         flags = re.MULTILINE | re.DOTALL
-        pattern = '<!--{token}(.*?){token}-->'.format(token=TOKEN)
-        text = re.sub(pattern, '', text, flags=flags)
-        return re.sub(r'\A[\s\n]*\n', '', text, flags=flags).rstrip()
+        pattern = "<!--{token}(.*?){token}-->".format(token=TOKEN)
+        text = re.sub(pattern, "", text, flags=flags)
+        return re.sub(r"\A[\s\n]*\n", "", text, flags=flags).rstrip()
 
     def clear_screen(self):
         """
@@ -948,7 +970,7 @@ class Terminal(object):
             https://github.com/tildeclub/ttrv/issues/323
         """
 
-        if self._term != 'xterm-256color':
+        if self._term != "xterm-256color":
             self.stdscr.touchwin()
         else:
             self.stdscr.clearok(True)
@@ -994,22 +1016,28 @@ class Terminal(object):
 
         elif theme.required_color_pairs > curses.COLOR_PAIRS:
             _logger.warning(
-                'Theme `%s` requires %s color pairs, but $TERM=%s only '
-                'supports %s color pairs, switching to default theme',
-                theme.name, theme.required_color_pairs, self._term,
-                curses.COLOR_PAIRS)
+                "Theme `%s` requires %s color pairs, but $TERM=%s only "
+                "supports %s color pairs, switching to default theme",
+                theme.name,
+                theme.required_color_pairs,
+                self._term,
+                curses.COLOR_PAIRS,
+            )
             theme = default_theme
 
         elif theme.required_colors > terminal_colors:
             _logger.warning(
-                'Theme `%s` requires %s colors, but $TERM=%s only '
-                'supports %s colors, switching to default theme',
-                theme.name, theme.required_colors, self._term,
-                curses.COLORS)
+                "Theme `%s` requires %s colors, but $TERM=%s only "
+                "supports %s colors, switching to default theme",
+                theme.name,
+                theme.required_colors,
+                self._term,
+                curses.COLORS,
+            )
             theme = default_theme
 
         theme.bind_curses()
         self.theme = theme
 
         # Apply the default color to the whole screen
-        self.stdscr.bkgd(str(' '), self.attr('Normal'))
+        self.stdscr.bkgd(str(" "), self.attr("Normal"))

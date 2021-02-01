@@ -28,9 +28,10 @@ def logged_in(f):
     @wraps(f)
     def wrapped_method(self, *args, **kwargs):
         if not self.reddit.is_oauth_session():
-            self.term.show_notification('Not logged in')
+            self.term.show_notification("Not logged in")
             return None
         return f(self, *args, **kwargs)
+
     return wrapped_method
 
 
@@ -132,7 +133,7 @@ class Page(object):
         """
         raise NotImplementedError
 
-    @PageController.register(Command('REFRESH'))
+    @PageController.register(Command("REFRESH"))
     def reload_page(self):
         """
         Clear the PRAW cache to force the page the re-fetch content from reddit.
@@ -140,22 +141,22 @@ class Page(object):
         self.reddit.handler.clear_cache()
         self.refresh_content()
 
-    @PageController.register(Command('EXIT'))
+    @PageController.register(Command("EXIT"))
     def exit(self):
         """
         Prompt and exit the application.
         """
-        if self.term.prompt_y_or_n('Do you really want to quit? (y/n): '):
+        if self.term.prompt_y_or_n("Do you really want to quit? (y/n): "):
             sys.exit()
 
-    @PageController.register(Command('FORCE_EXIT'))
+    @PageController.register(Command("FORCE_EXIT"))
     def force_exit(self):
         """
         Immediately exit the application.
         """
         sys.exit()
 
-    @PageController.register(Command('PREVIOUS_THEME'))
+    @PageController.register(Command("PREVIOUS_THEME"))
     def previous_theme(self):
         """
         Cycle to preview the previous theme from the internal list of themes.
@@ -169,7 +170,7 @@ class Page(object):
         message = self.term.theme.display_string
         self.term.show_notification(message, timeout=1)
 
-    @PageController.register(Command('NEXT_THEME'))
+    @PageController.register(Command("NEXT_THEME"))
     def next_theme(self):
         """
         Cycle to preview the next theme from the internal list of themes.
@@ -183,14 +184,14 @@ class Page(object):
         message = self.term.theme.display_string
         self.term.show_notification(message, timeout=1)
 
-    @PageController.register(Command('HELP'))
+    @PageController.register(Command("HELP"))
     def show_help(self):
         """
         Open the help documentation in the system pager.
         """
         self.term.open_pager(docs.HELP.strip())
 
-    @PageController.register(Command('MOVE_UP'))
+    @PageController.register(Command("MOVE_UP"))
     def move_cursor_up(self):
         """
         Move the cursor up one selection.
@@ -198,7 +199,7 @@ class Page(object):
         self._move_cursor(-1)
         self.clear_input_queue()
 
-    @PageController.register(Command('MOVE_DOWN'))
+    @PageController.register(Command("MOVE_DOWN"))
     def move_cursor_down(self):
         """
         Move the cursor down one selection.
@@ -206,7 +207,7 @@ class Page(object):
         self._move_cursor(1)
         self.clear_input_queue()
 
-    @PageController.register(Command('MOVE_NEXT_UNREAD'))
+    @PageController.register(Command("MOVE_NEXT_UNREAD"))
     def move_next_unread(self):
         """
         Move the cursor to the next unread url.
@@ -214,7 +215,7 @@ class Page(object):
         self._move_cursor_to_unread(1)
         self.clear_input_queue()
 
-    @PageController.register(Command('MOVE_PREV_UNREAD'))
+    @PageController.register(Command("MOVE_PREV_UNREAD"))
     def move_prev_unread(self):
         """
         Move the cursor to the previous unread url.
@@ -222,7 +223,7 @@ class Page(object):
         self._move_cursor_to_unread(-1)
         self.clear_input_queue()
 
-    @PageController.register(Command('PAGE_UP'))
+    @PageController.register(Command("PAGE_UP"))
     def move_page_up(self):
         """
         Move the cursor up approximately the number of entries on the page.
@@ -230,7 +231,7 @@ class Page(object):
         self._move_page(-1)
         self.clear_input_queue()
 
-    @PageController.register(Command('PAGE_DOWN'))
+    @PageController.register(Command("PAGE_DOWN"))
     def move_page_down(self):
         """
         Move the cursor down approximately the number of entries on the page.
@@ -238,7 +239,7 @@ class Page(object):
         self._move_page(1)
         self.clear_input_queue()
 
-    @PageController.register(Command('PAGE_TOP'))
+    @PageController.register(Command("PAGE_TOP"))
     def move_page_top(self):
         """
         Move the cursor to the first item on the page.
@@ -247,7 +248,7 @@ class Page(object):
         self.nav.cursor_index = 0
         self.nav.inverted = False
 
-    @PageController.register(Command('PAGE_BOTTOM'))
+    @PageController.register(Command("PAGE_BOTTOM"))
     def move_page_bottom(self):
         """
         Move the cursor to the last item on the page.
@@ -256,81 +257,85 @@ class Page(object):
         self.nav.cursor_index = 0
         self.nav.inverted = True
 
-    @PageController.register(Command('UPVOTE'))
+    @PageController.register(Command("UPVOTE"))
     @logged_in
     def upvote(self):
         """
         Upvote the currently selected item.
         """
         data = self.get_selected_item()
-        if 'likes' not in data:
+        if "likes" not in data:
             self.term.flash()
-        elif getattr(data['object'], 'archived'):
-            self.term.show_notification("Voting disabled for archived post", style='Error')
-        elif data['likes']:
-            with self.term.loader('Clearing vote'):
-                data['object'].clear_vote()
+        elif getattr(data["object"], "archived"):
+            self.term.show_notification(
+                "Voting disabled for archived post", style="Error"
+            )
+        elif data["likes"]:
+            with self.term.loader("Clearing vote"):
+                data["object"].clear_vote()
             if not self.term.loader.exception:
-                data['likes'] = None
+                data["likes"] = None
         else:
-            with self.term.loader('Voting'):
-                data['object'].upvote()
+            with self.term.loader("Voting"):
+                data["object"].upvote()
             if not self.term.loader.exception:
-                data['likes'] = True
+                data["likes"] = True
 
-    @PageController.register(Command('DOWNVOTE'))
+    @PageController.register(Command("DOWNVOTE"))
     @logged_in
     def downvote(self):
         """
         Downvote the currently selected item.
         """
         data = self.get_selected_item()
-        if 'likes' not in data:
+        if "likes" not in data:
             self.term.flash()
-        elif getattr(data['object'], 'archived'):
-            self.term.show_notification("Voting disabled for archived post", style='Error')
-        elif data['likes'] or data['likes'] is None:
-            with self.term.loader('Voting'):
-                data['object'].downvote()
+        elif getattr(data["object"], "archived"):
+            self.term.show_notification(
+                "Voting disabled for archived post", style="Error"
+            )
+        elif data["likes"] or data["likes"] is None:
+            with self.term.loader("Voting"):
+                data["object"].downvote()
             if not self.term.loader.exception:
-                data['likes'] = False
+                data["likes"] = False
         else:
-            with self.term.loader('Clearing vote'):
-                data['object'].clear_vote()
+            with self.term.loader("Clearing vote"):
+                data["object"].clear_vote()
             if not self.term.loader.exception:
-                data['likes'] = None
+                data["likes"] = None
 
-    @PageController.register(Command('SAVE'))
+    @PageController.register(Command("SAVE"))
     @logged_in
     def save(self):
         """
         Mark the currently selected item as saved through the reddit API.
         """
         data = self.get_selected_item()
-        if 'saved' not in data:
+        if "saved" not in data:
             self.term.flash()
-        elif not data['saved']:
-            with self.term.loader('Saving'):
-                data['object'].save()
+        elif not data["saved"]:
+            with self.term.loader("Saving"):
+                data["object"].save()
             if not self.term.loader.exception:
-                data['saved'] = True
+                data["saved"] = True
         else:
-            with self.term.loader('Unsaving'):
-                data['object'].unsave()
+            with self.term.loader("Unsaving"):
+                data["object"].unsave()
             if not self.term.loader.exception:
-                data['saved'] = False
+                data["saved"] = False
 
-    @PageController.register(Command('LOGIN'))
+    @PageController.register(Command("LOGIN"))
     def login(self):
         """
         Prompt to log into the user's account, or log out of the current
         account.
         """
         if self.reddit.is_oauth_session():
-            ch = self.term.show_notification('Log out? (y/n)')
-            if ch in (ord('y'), ord('Y')):
+            ch = self.term.show_notification("Log out? (y/n)")
+            if ch in (ord("y"), ord("Y")):
                 self.oauth.clear_oauth_data()
-                self.term.show_notification('Logged out')
+                self.term.show_notification("Logged out")
         else:
             self.oauth.authorize()
 
@@ -346,37 +351,36 @@ class Page(object):
         """
         data = self.get_selected_item()
 
-        if data['type'] == 'Submission':
-            body = data['text']
-            description = 'submission'
-            reply = data['object'].add_comment
-        elif data['type'] in ('Comment', 'InboxComment'):
-            body = data['body']
-            description = 'comment'
-            reply = data['object'].reply
-        elif data['type'] == 'Message':
-            body = data['body']
-            description = 'private message'
-            reply = data['object'].reply
+        if data["type"] == "Submission":
+            body = data["text"]
+            description = "submission"
+            reply = data["object"].add_comment
+        elif data["type"] in ("Comment", "InboxComment"):
+            body = data["body"]
+            description = "comment"
+            reply = data["object"].reply
+        elif data["type"] == "Message":
+            body = data["body"]
+            description = "private message"
+            reply = data["object"].reply
         else:
             self.term.flash()
             return
 
         # Construct the text that will be displayed in the editor file.
         # The post body will be commented out and added for reference
-        lines = ['  |' + line for line in body.split('\n')]
-        content = '\n'.join(lines)
+        lines = ["  |" + line for line in body.split("\n")]
+        content = "\n".join(lines)
         comment_info = docs.REPLY_FILE.format(
-            author=data['author'],
-            type=description,
-            content=content)
+            author=data["author"], type=description, content=content
+        )
 
         with self.term.open_editor(comment_info) as comment:
             if not comment:
-                self.term.show_notification('Canceled')
+                self.term.show_notification("Canceled")
                 return
 
-            with self.term.loader('Posting {}'.format(description), delay=0):
+            with self.term.loader("Posting {}".format(description), delay=0):
                 reply(comment)
                 # Give reddit time to process the submission
                 time.sleep(2.0)
@@ -386,60 +390,60 @@ class Page(object):
             else:
                 raise TemporaryFileError()
 
-    @PageController.register(Command('DELETE'))
+    @PageController.register(Command("DELETE"))
     @logged_in
     def delete_item(self):
         """
         Delete a submission or comment.
         """
         data = self.get_selected_item()
-        if data.get('author') != self.reddit.user.name:
+        if data.get("author") != self.reddit.user.name:
             self.term.flash()
             return
 
-        prompt = 'Are you sure you want to delete this? (y/n): '
+        prompt = "Are you sure you want to delete this? (y/n): "
         if not self.term.prompt_y_or_n(prompt):
-            self.term.show_notification('Canceled')
+            self.term.show_notification("Canceled")
             return
 
-        with self.term.loader('Deleting', delay=0):
-            data['object'].delete()
+        with self.term.loader("Deleting", delay=0):
+            data["object"].delete()
             # Give reddit time to process the request
             time.sleep(2.0)
 
         if self.term.loader.exception is None:
             self.reload_page()
 
-    @PageController.register(Command('EDIT'))
+    @PageController.register(Command("EDIT"))
     @logged_in
     def edit(self):
         """
         Edit a submission or comment.
         """
         data = self.get_selected_item()
-        if data.get('author') != self.reddit.user.name:
+        if data.get("author") != self.reddit.user.name:
             self.term.flash()
             return
 
-        if data['type'] == 'Submission':
-            content = data['text']
+        if data["type"] == "Submission":
+            content = data["text"]
             info = docs.SUBMISSION_EDIT_FILE.format(
-                content=content, id=data['object'].id)
-        elif data['type'] == 'Comment':
-            content = data['body']
-            info = docs.COMMENT_EDIT_FILE.format(
-                content=content, id=data['object'].id)
+                content=content, id=data["object"].id
+            )
+        elif data["type"] == "Comment":
+            content = data["body"]
+            info = docs.COMMENT_EDIT_FILE.format(content=content, id=data["object"].id)
         else:
             self.term.flash()
             return
 
         with self.term.open_editor(info) as text:
             if not text or text == content:
-                self.term.show_notification('Canceled')
+                self.term.show_notification("Canceled")
                 return
 
-            with self.term.loader('Editing', delay=0):
-                data['object'].edit(text)
+            with self.term.loader("Editing", delay=0):
+                data["object"].edit(text)
                 time.sleep(2.0)
 
             if self.term.loader.exception is None:
@@ -447,7 +451,7 @@ class Page(object):
             else:
                 raise TemporaryFileError()
 
-    @PageController.register(Command('PRIVATE_MESSAGE'))
+    @PageController.register(Command("PRIVATE_MESSAGE"))
     @logged_in
     def send_private_message(self):
         """
@@ -456,15 +460,15 @@ class Page(object):
         message_info = docs.MESSAGE_FILE
         with self.term.open_editor(message_info) as text:
             if not text:
-                self.term.show_notification('Canceled')
+                self.term.show_notification("Canceled")
                 return
 
-            parts = text.split('\n', 2)
+            parts = text.split("\n", 2)
             if len(parts) == 1:
-                self.term.show_notification('Missing message subject')
+                self.term.show_notification("Missing message subject")
                 return
             elif len(parts) == 2:
-                self.term.show_notification('Missing message body')
+                self.term.show_notification("Missing message body")
                 return
 
             recipient, subject, message = parts
@@ -473,26 +477,27 @@ class Page(object):
             message = message.rstrip()
 
             if not recipient:
-                self.term.show_notification('Missing recipient')
+                self.term.show_notification("Missing recipient")
                 return
             elif not subject:
-                self.term.show_notification('Missing message subject')
+                self.term.show_notification("Missing message subject")
                 return
             elif not message:
-                self.term.show_notification('Missing message body')
+                self.term.show_notification("Missing message body")
                 return
 
-            with self.term.loader('Sending message', delay=0):
+            with self.term.loader("Sending message", delay=0):
                 self.reddit.send_message(
-                    recipient, subject, message, raise_captcha_exception=True)
+                    recipient, subject, message, raise_captcha_exception=True
+                )
                 # Give reddit time to process the message
                 time.sleep(2.0)
 
             if self.term.loader.exception:
                 raise TemporaryFileError()
             else:
-                self.term.show_notification('Message sent!')
-                self.selected_page = self.open_inbox_page('sent')
+                self.term.show_notification("Message sent!")
+                self.selected_page = self.open_inbox_page("sent")
 
     def prompt_and_select_link(self):
         """
@@ -501,14 +506,14 @@ class Page(object):
         Return the link that was selected, or ``None`` if no link was selected.
         """
         data = self.get_selected_item()
-        url_full = data.get('url_full')
-        permalink = data.get('permalink')
+        url_full = data.get("url_full")
+        permalink = data.get("permalink")
 
         if url_full and url_full != permalink:
             # The item is a link-only submission that won't contain text
             link = url_full
         else:
-            html = data.get('html')
+            html = data.get("html")
             if html:
                 extracted_links = self.content.extract_links(html)
                 if not extracted_links:
@@ -518,7 +523,7 @@ class Page(object):
                     # Let the user decide which link to open
                     links = []
                     if permalink:
-                        links += [{'text': 'Permalink', 'href': permalink}]
+                        links += [{"text": "Permalink", "href": permalink}]
                     links += extracted_links
                     link = self.term.prompt_user_to_select_link(links)
             else:
@@ -527,15 +532,15 @@ class Page(object):
 
         return link
 
-    @PageController.register(Command('COPY_PERMALINK'))
+    @PageController.register(Command("COPY_PERMALINK"))
     def copy_permalink(self):
         """
         Copy the submission permalink to OS clipboard
         """
-        url = self.get_selected_item().get('permalink')
+        url = self.get_selected_item().get("permalink")
         self.copy_to_clipboard(url)
 
-    @PageController.register(Command('COPY_URL'))
+    @PageController.register(Command("COPY_URL"))
     def copy_url(self):
         """
         Copy a link to OS clipboard
@@ -555,34 +560,32 @@ class Page(object):
             clipboard_copy(url)
         except (ProgramError, OSError) as e:
             _logger.exception(e)
-            self.term.show_notification(
-                'Failed to copy url: {0}'.format(e))
+            self.term.show_notification("Failed to copy url: {0}".format(e))
         else:
-            self.term.show_notification(
-                ['Copied to clipboard:', url], timeout=1)
+            self.term.show_notification(["Copied to clipboard:", url], timeout=1)
 
-    @PageController.register(Command('SUBSCRIPTIONS'))
+    @PageController.register(Command("SUBSCRIPTIONS"))
     @logged_in
     def subscriptions(self):
         """
         View a list of the user's subscribed subreddits
         """
-        self.selected_page = self.open_subscription_page('subreddit')
+        self.selected_page = self.open_subscription_page("subreddit")
 
-    @PageController.register(Command('MULTIREDDITS'))
+    @PageController.register(Command("MULTIREDDITS"))
     @logged_in
     def multireddits(self):
         """
         View a list of the user's subscribed multireddits
         """
-        self.selected_page = self.open_subscription_page('multireddit')
+        self.selected_page = self.open_subscription_page("multireddit")
 
-    @PageController.register(Command('PROMPT'))
+    @PageController.register(Command("PROMPT"))
     def prompt(self):
         """
         Open a prompt to navigate to a different subreddit or comment"
         """
-        name = self.term.prompt_input('Enter page: /')
+        name = self.term.prompt_input("Enter page: /")
         if name:
             # Check if opening a submission url or a subreddit url
             # Example patterns for submissions:
@@ -590,22 +593,22 @@ class Page(object):
             #     /comments/571dw3
             #     /r/pics/comments/571dw3/
             #     https://www.reddit.com/r/pics/comments/571dw3/at_disneyland
-            submission_pattern = re.compile(r'(^|/)comments/(?P<id>.+?)($|/)')
+            submission_pattern = re.compile(r"(^|/)comments/(?P<id>.+?)($|/)")
 
             match = submission_pattern.search(name)
             if match:
-                url = 'https://www.reddit.com/comments/{0}'.format(match.group('id'))
+                url = "https://www.reddit.com/comments/{0}".format(match.group("id"))
                 self.selected_page = self.open_submission_page(url)
             else:
                 self.selected_page = self.open_subreddit_page(name)
 
-    @PageController.register(Command('INBOX'))
+    @PageController.register(Command("INBOX"))
     @logged_in
     def inbox(self):
         """
         View the user's inbox.
         """
-        self.selected_page = self.open_inbox_page('all')
+        self.selected_page = self.open_inbox_page("all")
 
     def open_inbox_page(self, content_type):
         """
@@ -613,9 +616,14 @@ class Page(object):
         """
         from .inbox_page import InboxPage
 
-        with self.term.loader('Loading inbox'):
-            page = InboxPage(self.reddit, self.term, self.config, self.oauth,
-                             content_type=content_type)
+        with self.term.loader("Loading inbox"):
+            page = InboxPage(
+                self.reddit,
+                self.term,
+                self.config,
+                self.oauth,
+                content_type=content_type,
+            )
         if not self.term.loader.exception:
             return page
 
@@ -625,9 +633,14 @@ class Page(object):
         """
         from .subscription_page import SubscriptionPage
 
-        with self.term.loader('Loading {0}s'.format(content_type)):
-            page = SubscriptionPage(self.reddit, self.term, self.config,
-                                    self.oauth, content_type=content_type)
+        with self.term.loader("Loading {0}s".format(content_type)):
+            page = SubscriptionPage(
+                self.reddit,
+                self.term,
+                self.config,
+                self.oauth,
+                content_type=content_type,
+            )
         if not self.term.loader.exception:
             return page
 
@@ -637,9 +650,15 @@ class Page(object):
         """
         from .submission_page import SubmissionPage
 
-        with self.term.loader('Loading submission'):
-            page = SubmissionPage(self.reddit, self.term, self.config,
-                                  self.oauth, url=url, submission=submission)
+        with self.term.loader("Loading submission"):
+            page = SubmissionPage(
+                self.reddit,
+                self.term,
+                self.config,
+                self.oauth,
+                url=url,
+                submission=submission,
+            )
         if not self.term.loader.exception:
             return page
 
@@ -649,9 +668,8 @@ class Page(object):
         """
         from .subreddit_page import SubredditPage
 
-        with self.term.loader('Loading subreddit'):
-            page = SubredditPage(self.reddit, self.term, self.config,
-                                 self.oauth, name)
+        with self.term.loader("Loading subreddit"):
+            page = SubredditPage(self.reddit, self.term, self.config, self.oauth, name)
         if not self.term.loader.exception:
             return page
 
@@ -691,42 +709,42 @@ class Page(object):
         window = self.term.stdscr.derwin(1, n_cols, self._row, 0)
         window.erase()
         # curses.bkgd expects bytes in py2 and unicode in py3
-        window.bkgd(str(' '), self.term.attr('TitleBar'))
+        window.bkgd(str(" "), self.term.attr("TitleBar"))
 
         sub_name = self.content.name
-        sub_name = sub_name.replace('/r/front', 'Front Page')
+        sub_name = sub_name.replace("/r/front", "Front Page")
 
-        parts = sub_name.split('/')
+        parts = sub_name.split("/")
         if len(parts) == 1:
             pass
-        elif '/m/' in sub_name:
+        elif "/m/" in sub_name:
             _, _, user, _, multi = parts
-            sub_name = '{} Curated by {}'.format(multi, user)
-        elif parts[1] == 'u':
-            noun = 'My' if parts[2] == 'me' else parts[2] + "'s"
-            user_room = parts[3] if len(parts) == 4 else 'overview'
+            sub_name = "{} Curated by {}".format(multi, user)
+        elif parts[1] == "u":
+            noun = "My" if parts[2] == "me" else parts[2] + "'s"
+            user_room = parts[3] if len(parts) == 4 else "overview"
             title_lookup = {
-                'overview': 'Overview',
-                'submitted': 'Submissions',
-                'comments': 'Comments',
-                'saved': 'Saved Content',
-                'hidden': 'Hidden Content',
-                'upvoted': 'Upvoted Content',
-                'downvoted': 'Downvoted Content'
+                "overview": "Overview",
+                "submitted": "Submissions",
+                "comments": "Comments",
+                "saved": "Saved Content",
+                "hidden": "Hidden Content",
+                "upvoted": "Upvoted Content",
+                "downvoted": "Downvoted Content",
             }
             sub_name = "{} {}".format(noun, title_lookup[user_room])
 
         query = self.content.query
         if query:
-            sub_name = 'Searching {0}: {1}'.format(sub_name, query)
+            sub_name = "Searching {0}: {1}".format(sub_name, query)
         self.term.add_line(window, sub_name, 0, 0)
 
         # Set the terminal title
         if len(sub_name) > 50:
-            title = sub_name.strip('/')
-            title = title.replace('_', ' ')
+            title = sub_name.strip("/")
+            title = title.replace("_", " ")
             try:
-                title = title.rsplit('/', 1)[1]
+                title = title.rsplit("/", 1)[1]
             except IndexError:
                 pass
         else:
@@ -734,28 +752,28 @@ class Page(object):
 
         # Setting the terminal title will break emacs or systems without
         # X window.
-        if os.getenv('DISPLAY') and not os.getenv('INSIDE_EMACS'):
-            title += ' - ttrv {0}'.format(__version__)
+        if os.getenv("DISPLAY") and not os.getenv("INSIDE_EMACS"):
+            title += " - ttrv {0}".format(__version__)
             title = self.term.clean(title)
             if six.PY3:
                 # In py3 you can't write bytes to stdout
-                title = title.decode('utf-8')
-                title = '\x1b]2;{0}\x07'.format(title)
+                title = title.decode("utf-8")
+                title = "\x1b]2;{0}\x07".format(title)
             else:
-                title = b'\x1b]2;{0}\x07'.format(title)
+                title = b"\x1b]2;{0}\x07".format(title)
             sys.stdout.write(title)
             sys.stdout.flush()
 
         if self.reddit and self.reddit.user is not None:
             # The starting position of the name depends on if we're converting
             # to ascii or not
-            width = len if self.config['ascii'] else textual_width
+            width = len if self.config["ascii"] else textual_width
 
-            if self.config['hide_username']:
+            if self.config["hide_username"]:
                 username = "Logged in"
             else:
                 username = self.reddit.user.name
-            s_col = (n_cols - width(username) - 1)
+            s_col = n_cols - width(username) - 1
             # Only print username if it fits in the empty space on the right
             if (s_col - 1) >= width(sub_name):
                 self.term.add_line(window, username, 0, s_col)
@@ -769,19 +787,19 @@ class Page(object):
         n_rows, n_cols = self.term.stdscr.getmaxyx()
         window = self.term.stdscr.derwin(1, n_cols, self._row, 0)
         window.erase()
-        window.bkgd(str(' '), self.term.attr('OrderBar'))
+        window.bkgd(str(" "), self.term.attr("OrderBar"))
 
         banner = docs.BANNER_SEARCH if self.content.query else self.BANNER
-        items = banner.strip().split(' ')
+        items = banner.strip().split(" ")
 
         distance = (n_cols - sum(len(t) for t in items) - 1) / (len(items) - 1)
-        spacing = max(1, int(distance)) * ' '
+        spacing = max(1, int(distance)) * " "
         text = spacing.join(items)
         self.term.add_line(window, text, 0, 0)
         if self.content.order is not None:
-            order = self.content.order.split('-')[0]
+            order = self.content.order.split("-")[0]
             col = text.find(order) - 3
-            attr = self.term.attr('OrderBarHighlight')
+            attr = self.term.attr("OrderBarHighlight")
             window.chgat(0, col, 3, attr)
 
         self._row += 1
@@ -807,7 +825,7 @@ class Page(object):
         available_rows = win_n_rows
         top_item_height = None if inverted else self.nav.top_item_height
         for data in self.content.iterate(page_index, step, win_n_cols - 2):
-            subwin_n_rows = min(available_rows, data['n_rows'])
+            subwin_n_rows = min(available_rows, data["n_rows"])
             subwin_inverted = inverted
             if top_item_height is not None:
                 # Special case: draw the page as non-inverted, except for the
@@ -816,11 +834,13 @@ class Page(object):
                 subwin_n_rows = min(subwin_n_rows, top_item_height)
                 subwin_inverted = True
                 top_item_height = None
-            subwin_n_cols = win_n_cols - data['h_offset']
+            subwin_n_cols = win_n_cols - data["h_offset"]
             start = current_row - subwin_n_rows + 1 if inverted else current_row
-            subwindow = window.derwin(subwin_n_rows, subwin_n_cols, start, data['h_offset'])
+            subwindow = window.derwin(
+                subwin_n_rows, subwin_n_cols, start, data["h_offset"]
+            )
             self._subwindows.append((subwindow, data, subwin_inverted))
-            available_rows -= (subwin_n_rows + 1)  # Add one for the blank line
+            available_rows -= subwin_n_rows + 1  # Add one for the blank line
             current_row += step * (subwin_n_rows + 1)
             if available_rows <= 0:
                 # Indicate the page is full and we can keep the inverted screen.
@@ -852,11 +872,11 @@ class Page(object):
         # to draw the text onto each subwindow
         for index, (win, data, inverted) in enumerate(self._subwindows):
             if self.nav.absolute_index >= 0 and index == self.nav.cursor_index:
-                win.bkgd(str(' '), self.term.attr('Selected'))
+                win.bkgd(str(" "), self.term.attr("Selected"))
                 with self.term.theme.turn_on_selected():
                     self._draw_item(win, data, inverted)
             else:
-                win.bkgd(str(' '), self.term.attr('Normal'))
+                win.bkgd(str(" "), self.term.attr("Normal"))
                 self._draw_item(win, data, inverted)
 
         self._row += win_n_rows
@@ -868,7 +888,7 @@ class Page(object):
         n_rows, n_cols = self.term.stdscr.getmaxyx()
         window = self.term.stdscr.derwin(1, n_cols, self._row, 0)
         window.erase()
-        window.bkgd(str(' '), self.term.attr('HelpBar'))
+        window.bkgd(str(" "), self.term.attr("HelpBar"))
 
         text = self.FOOTER.strip()
         self.term.add_line(window, text, 0, 0)
@@ -888,24 +908,25 @@ class Page(object):
             valid, redraw = self.nav.move(direction, len(self._subwindows))
             if valid:
                 data = self.get_selected_item()
-                url_in_history = data['url_full'] in self.config.history
+                url_in_history = data["url_full"] in self.config.history
         if not valid:
             self.term.flash()
 
     def _move_page(self, direction):
-        valid, redraw = self.nav.move_page(direction, len(self._subwindows)-1)
+        valid, redraw = self.nav.move_page(direction, len(self._subwindows) - 1)
         if not valid:
             self.term.flash()
 
     def _prompt_period(self, order):
         choices = {
-            '\n': order,
-            '1': '{0}-hour'.format(order),
-            '2': '{0}-day'.format(order),
-            '3': '{0}-week'.format(order),
-            '4': '{0}-month'.format(order),
-            '5': '{0}-year'.format(order),
-            '6': '{0}-all'.format(order)}
+            "\n": order,
+            "1": "{0}-hour".format(order),
+            "2": "{0}-day".format(order),
+            "3": "{0}-week".format(order),
+            "4": "{0}-month".format(order),
+            "5": "{0}-year".format(order),
+            "6": "{0}-all".format(order),
+        }
 
         message = docs.TIME_ORDER_MENU.strip().splitlines()
         ch = self.term.show_notification(message)

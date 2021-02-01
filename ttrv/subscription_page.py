@@ -15,14 +15,13 @@ class SubscriptionPage(Page):
     BANNER = None
     FOOTER = docs.FOOTER_SUBSCRIPTION
 
-    name = 'subscription'
+    name = "subscription"
 
-    def __init__(self, reddit, term, config, oauth, content_type='subreddit'):
+    def __init__(self, reddit, term, config, oauth, content_type="subreddit"):
         super(SubscriptionPage, self).__init__(reddit, term, config, oauth)
 
         self.controller = SubscriptionController(self, keymap=config.keymap)
-        self.content = SubscriptionContent.from_user(
-            reddit, term.loader, content_type)
+        self.content = SubscriptionContent.from_user(reddit, term.loader, content_type)
         self.nav = Navigator(self.content.get)
         self.content_type = content_type
 
@@ -44,19 +43,20 @@ class SubscriptionPage(Page):
 
         with self.term.loader():
             self.content = SubscriptionContent.from_user(
-                self.reddit, self.term.loader, self.content_type)
+                self.reddit, self.term.loader, self.content_type
+            )
         if not self.term.loader.exception:
             self.nav = Navigator(self.content.get)
 
-    @SubscriptionController.register(Command('SUBSCRIPTION_SELECT'))
+    @SubscriptionController.register(Command("SUBSCRIPTION_SELECT"))
     def select_subreddit(self):
         """
         Store the selected subreddit and return to the subreddit page
         """
-        name = self.get_selected_item()['name']
+        name = self.get_selected_item()["name"]
         self.selected_page = self.open_subreddit_page(name)
 
-    @SubscriptionController.register(Command('SUBSCRIPTION_EXIT'))
+    @SubscriptionController.register(Command("SUBSCRIPTION_EXIT"))
     def close_subscriptions(self):
         """
         Close subscriptions and return to the subreddit page
@@ -73,25 +73,25 @@ class SubscriptionPage(Page):
 
         # Handle the case where the window is not large enough to fit the data.
         valid_rows = range(0, n_rows)
-        offset = 0 if not inverted else -(data['n_rows'] - n_rows)
+        offset = 0 if not inverted else -(data["n_rows"] - n_rows)
 
         row = offset
         if row in valid_rows:
-            if data['type'] == 'Multireddit':
-                attr = self.term.attr('MultiredditName')
+            if data["type"] == "Multireddit":
+                attr = self.term.attr("MultiredditName")
             else:
-                attr = self.term.attr('SubscriptionName')
-            self.term.add_line(win, '{name}'.format(**data), row, 1, attr)
+                attr = self.term.attr("SubscriptionName")
+            self.term.add_line(win, "{name}".format(**data), row, 1, attr)
 
         row = offset + 1
-        for row, text in enumerate(data['split_title'], start=row):
+        for row, text in enumerate(data["split_title"], start=row):
             if row in valid_rows:
-                if data['type'] == 'Multireddit':
-                    attr = self.term.attr('MultiredditText')
+                if data["type"] == "Multireddit":
+                    attr = self.term.attr("MultiredditText")
                 else:
-                    attr = self.term.attr('SubscriptionText')
+                    attr = self.term.attr("SubscriptionText")
                 self.term.add_line(win, text, row, 1, attr)
 
-        attr = self.term.attr('CursorBlock')
+        attr = self.term.attr("CursorBlock")
         for y in range(n_rows):
-            self.term.addch(win, y, 0, str(' '), attr)
+            self.term.addch(win, y, 0, str(" "), attr)

@@ -59,8 +59,7 @@ def comment_stream(reddit_session, subreddit, limit=None, verbosity=1):
         regarding the comment stream. (Default: 1)
 
     """
-    get_function = partial(reddit_session.get_comments,
-                           six.text_type(subreddit))
+    get_function = partial(reddit_session.get_comments, six.text_type(subreddit))
     return _stream_generator(get_function, limit, verbosity)
 
 
@@ -91,7 +90,7 @@ def submission_stream(reddit_session, subreddit, limit=None, verbosity=1):
     if six.text_type(subreddit).lower() == "all":
         if limit is None:
             limit = 1000
-    if not hasattr(subreddit, 'reddit_session'):
+    if not hasattr(subreddit, "reddit_session"):
         subreddit = reddit_session.get_subreddit(subreddit)
     return _stream_generator(subreddit.get_new, limit, verbosity)
 
@@ -110,19 +109,24 @@ def valid_redditors(redditors, sub):
 
     """
     simplified = list(set(six.text_type(x).lower() for x in redditors))
-    return [sub.reddit_session.get_redditor(simplified[i], fetch=False)
-            for (i, resp) in enumerate(sub.set_flair_csv(
-                ({'user': x, 'flair_text': x} for x in simplified)))
-            if resp['ok']]
+    return [
+        sub.reddit_session.get_redditor(simplified[i], fetch=False)
+        for (i, resp) in enumerate(
+            sub.set_flair_csv(({"user": x, "flair_text": x} for x in simplified))
+        )
+        if resp["ok"]
+    ]
 
 
-def submissions_between(reddit_session,
-                        subreddit,
-                        lowest_timestamp=None,
-                        highest_timestamp=None,
-                        newest_first=True,
-                        extra_cloudsearch_fields=None,
-                        verbosity=1):
+def submissions_between(
+    reddit_session,
+    subreddit,
+    lowest_timestamp=None,
+    highest_timestamp=None,
+    newest_first=True,
+    extra_cloudsearch_fields=None,
+    verbosity=1,
+):
     """Yield submissions between two timestamps.
 
     If both ``highest_timestamp`` and ``lowest_timestamp`` are unspecified,
@@ -153,18 +157,21 @@ def submissions_between(reddit_session,
         processed; >= 2: output debugging information regarding
         the search queries. (Default: 1)
     """
+
     def debug(msg, level):
         if verbosity >= level:
-            sys.stderr.write(msg + '\n')
+            sys.stderr.write(msg + "\n")
 
     def format_query_field(k, v):
         if k in ["nsfw", "self"]:
             # even though documentation lists "no" and "yes"
             # as possible values, in reality they don't work
             if v not in [0, 1, "0", "1"]:
-                raise PRAWException("Invalid value for the extra"
-                                    "field {}. Only '0' and '1' are"
-                                    "valid values.".format(k))
+                raise PRAWException(
+                    "Invalid value for the extra"
+                    "field {}. Only '0' and '1' are"
+                    "valid values.".format(k)
+                )
             return "{}:{}".format(k, v)
         return "{}:'{}'".format(k, v)
 
@@ -172,8 +179,10 @@ def submissions_between(reddit_session,
         extra_cloudsearch_fields = {}
 
     extra_query_part = " ".join(
-        [format_query_field(k, v) for (k, v)
-         in sorted(extra_cloudsearch_fields.items())]
+        [
+            format_query_field(k, v)
+            for (k, v) in sorted(extra_cloudsearch_fields.items())
+        ]
     )
 
     if highest_timestamp is None:
@@ -222,21 +231,27 @@ def submissions_between(reddit_session,
                 t1 = lowest_timestamp
                 t2 = min(lowest_timestamp + window_size, highest_timestamp)
 
-            search_query = 'timestamp:{}..{}'.format(t1, t2)
+            search_query = "timestamp:{}..{}".format(t1, t2)
             if extra_query_part:
-                search_query = "(and {} {})".format(search_query,
-                                                    extra_query_part)
+                search_query = "(and {} {})".format(search_query, extra_query_part)
 
             debug(search_query, 3)
-            search_results = list(reddit_session.search(search_query,
-                                                        subreddit=subreddit,
-                                                        limit=search_limit,
-                                                        syntax='cloudsearch',
-                                                        sort='new'))
+            search_results = list(
+                reddit_session.search(
+                    search_query,
+                    subreddit=subreddit,
+                    limit=search_limit,
+                    syntax="cloudsearch",
+                    sort="new",
+                )
+            )
 
-            debug("Received {0} search results for query {1}"
-                  .format(len(search_results), search_query),
-                  2)
+            debug(
+                "Received {0} search results for query {1}".format(
+                    len(search_results), search_query
+                ),
+                2,
+            )
 
             backoff = BACKOFF_START
         except HTTPException as exc:
@@ -247,10 +262,9 @@ def submissions_between(reddit_session,
 
         if len(search_results) >= search_limit:
             power = 2 if prev_win_decreased else 1
-            window_size = int(window_size / window_adjustment_ratio**power)
+            window_size = int(window_size / window_adjustment_ratio ** power)
             prev_win_decreased = True
-            debug("Decreasing window size to {0} seconds".format(window_size),
-                  2)
+            debug("Decreasing window size to {0} seconds".format(window_size), 2)
             # Since it is possible that there are more submissions
             # in the current window, we have to re-do the request
             # with reduced window
@@ -258,30 +272,31 @@ def submissions_between(reddit_session,
         else:
             prev_win_decreased = False
 
-        search_results = [s for s in search_results
-                          if original_lowest_timestamp <= s.created and
-                          s.created <= original_highest_timestamp]
+        search_results = [
+            s
+            for s in search_results
+            if original_lowest_timestamp <= s.created
+            and s.created <= original_highest_timestamp
+        ]
 
-        for submission in sorted(search_results,
-                                 key=attrgetter('created_utc', 'id'),
-                                 reverse=newest_first):
+        for submission in sorted(
+            search_results, key=attrgetter("created_utc", "id"), reverse=newest_first
+        ):
             yield submission
 
         processed_submissions += len(search_results)
-        debug('Total processed submissions: {}'
-              .format(processed_submissions), 1)
+        debug("Total processed submissions: {}".format(processed_submissions), 1)
 
         if newest_first:
-            highest_timestamp -= (window_size + 1)
+            highest_timestamp -= window_size + 1
         else:
-            lowest_timestamp += (window_size + 1)
+            lowest_timestamp += window_size + 1
 
         if len(search_results) < min_search_results_in_window:
             power = 2 if prev_win_increased else 1
-            window_size = int(window_size * window_adjustment_ratio**power)
+            window_size = int(window_size * window_adjustment_ratio ** power)
             prev_win_increased = True
-            debug("Increasing window size to {0} seconds"
-                  .format(window_size), 2)
+            debug("Increasing window size to {0} seconds".format(window_size), 2)
         else:
             prev_win_increased = False
 
@@ -289,7 +304,7 @@ def submissions_between(reddit_session,
 def _stream_generator(get_function, limit=None, verbosity=1):
     def debug(msg, level):
         if verbosity >= level:
-            sys.stderr.write(msg + '\n')
+            sys.stderr.write(msg + "\n")
 
     def b36_id(item):
         return int(item.id, 36)
@@ -305,18 +320,22 @@ def _stream_generator(get_function, limit=None, verbosity=1):
         start = timer()
         try:
             i = None
-            params = {'uniq': count}
+            params = {"uniq": count}
             count = (count + 1) % 100
             if before:
-                params['before'] = before
+                params["before"] = before
             gen = enumerate(get_function(limit=limit, params=params))
             for i, item in gen:
                 if b36_id(item) in seen:
                     if i == 0:
                         if before is not None:
                             # reddit sent us out of order data  -- log it
-                            debug('(INFO) {0} already seen with before of {1}'
-                                  .format(item.fullname, before), 3)
+                            debug(
+                                "(INFO) {0} already seen with before of {1}".format(
+                                    item.fullname, before
+                                ),
+                                3,
+                            )
                             before = None
                     break
                 if i == 0:  # Always the first item in the generator
@@ -325,8 +344,7 @@ def _stream_generator(get_function, limit=None, verbosity=1):
                     items.append(item)
                     processed += 1
                 if verbosity >= 1 and processed % 100 == 0:
-                    sys.stderr.write(' Items: {0}            \r'
-                                     .format(processed))
+                    sys.stderr.write(" Items: {0}            \r".format(processed))
                     sys.stderr.flush()
                 if i < KEEP_ITEMS:
                     seen.add(b36_id(item))
@@ -338,14 +356,12 @@ def _stream_generator(get_function, limit=None, verbosity=1):
                     before = None
             backoff = BACKOFF_START
         except HTTPException as exc:
-            sleep = (backoff, '{0}. Sleeping for {{0}} seconds.'.format(exc),
-                     2)
+            sleep = (backoff, "{0}. Sleeping for {{0}} seconds.".format(exc), 2)
             backoff *= 2
         # Provide rate limit
         if verbosity >= 1:
             rate = len(items) / (timer() - start)
-            sys.stderr.write(' Items: {0} ({1:.2f} ips)    \r'
-                             .format(processed, rate))
+            sys.stderr.write(" Items: {0} ({1:.2f} ips)    \r".format(processed, rate))
             sys.stderr.flush()
         # Yield items from oldest to newest
         for item in items[::-1]:
@@ -382,8 +398,9 @@ def chunk_sequence(sequence, chunk_length, allow_incomplete=True):
 def convert_id36_to_numeric_id(id36):
     """Convert strings representing base36 numbers into an integer."""
     if not isinstance(id36, six.string_types) or id36.count("_") > 0:
-        raise ValueError("must supply base36 string, not fullname (e.g. use "
-                         "xxxxx, not t3_xxxxx)")
+        raise ValueError(
+            "must supply base36 string, not fullname (e.g. use " "xxxxx, not t3_xxxxx)"
+        )
     return int(id36, 36)
 
 
@@ -404,7 +421,7 @@ def convert_numeric_id_to_id36(numeric_id):
         raise ValueError("must supply a positive int/long")
 
     # Alphabet used for base 36 conversion
-    alphabet = '0123456789abcdefghijklmnopqrstuvwxyz'
+    alphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
     alphabet_len = len(alphabet)
 
     # Temp assign
@@ -421,10 +438,10 @@ def convert_numeric_id_to_id36(numeric_id):
         base36.append(alphabet[rem])
 
     # String is built in reverse order
-    return ''.join(reversed(base36))
+    return "".join(reversed(base36))
 
 
-def flatten_tree(tree, nested_attr='replies', depth_first=False):
+def flatten_tree(tree, nested_attr="replies", depth_first=False):
     """Return a flattened version of the passed in tree.
 
     :param nested_attr: The attribute name that contains the nested items.
@@ -447,9 +464,9 @@ def flatten_tree(tree, nested_attr='replies', depth_first=False):
 
 def normalize_url(url):
     """Return url after stripping trailing .json and trailing slashes."""
-    if url.endswith('.json'):
+    if url.endswith(".json"):
         url = url[:-5]
-    if url.endswith('/'):
+    if url.endswith("/"):
         url = url[:-1]
     return url
 

@@ -46,7 +46,7 @@ class ClientException(PRAWException):
 
         """
         if not message:
-            message = 'Clientside error'
+            message = "Clientside error"
         super(ClientException, self).__init__()
         self.message = message
 
@@ -72,8 +72,7 @@ class OAuthScopeRequired(ClientException):
 
         """
         if not message:
-            message = '`{0}` requires the OAuth2 scope `{1}`'.format(function,
-                                                                     scope)
+            message = "`{0}` requires the OAuth2 scope `{1}`".format(function, scope)
         super(OAuthScopeRequired, self).__init__(message)
         self.scope = scope
 
@@ -95,7 +94,7 @@ class LoginRequired(ClientException):
 
         """
         if not message:
-            message = '`{0}` requires a logged in session'.format(function)
+            message = "`{0}` requires a logged in session".format(function)
         super(LoginRequired, self).__init__(message)
 
 
@@ -117,8 +116,9 @@ class LoginOrScopeRequired(OAuthScopeRequired, LoginRequired):
 
         """
         if not message:
-            message = ('`{0}` requires a logged in session or the '
-                       'OAuth2 scope `{1}`').format(function, scope)
+            message = (
+                "`{0}` requires a logged in session or the " "OAuth2 scope `{1}`"
+            ).format(function, scope)
         super(LoginOrScopeRequired, self).__init__(function, scope, message)
 
 
@@ -131,8 +131,7 @@ class ModeratorRequired(LoginRequired):
         :param function: The function that requires moderator access.
 
         """
-        message = ('`{0}` requires a moderator '
-                   'of the subreddit').format(function)
+        message = ("`{0}` requires a moderator " "of the subreddit").format(function)
         super(ModeratorRequired, self).__init__(message)
 
 
@@ -152,10 +151,10 @@ class ModeratorOrScopeRequired(LoginOrScopeRequired, ModeratorRequired):
             moderator access..
 
         """
-        message = ('`{0}` requires a moderator of the subreddit or the '
-                   'OAuth2 scope `{1}`').format(function, scope)
-        super(ModeratorOrScopeRequired, self).__init__(function, scope,
-                                                       message)
+        message = (
+            "`{0}` requires a moderator of the subreddit or the " "OAuth2 scope `{1}`"
+        ).format(function, scope)
+        super(ModeratorOrScopeRequired, self).__init__(function, scope, message)
 
 
 class OAuthAppRequired(ClientException):
@@ -177,7 +176,7 @@ class HTTPException(PRAWException):
 
         """
         if not message:
-            message = 'HTTP error'
+            message = "HTTP error"
         super(HTTPException, self).__init__()
         self._raw = _raw
         self.message = message
@@ -198,7 +197,7 @@ class NotFound(HTTPException):
 class InvalidComment(PRAWException):
     """Indicate that the comment is no longer available on reddit."""
 
-    ERROR_TYPE = 'DELETED_COMMENT'
+    ERROR_TYPE = "DELETED_COMMENT"
 
     def __str__(self):
         """Return the message of the error."""
@@ -208,7 +207,7 @@ class InvalidComment(PRAWException):
 class InvalidSubmission(PRAWException):
     """Indicates that the submission is no longer available on reddit."""
 
-    ERROR_TYPE = 'DELETED_LINK'
+    ERROR_TYPE = "DELETED_LINK"
 
     def __str__(self):
         """Return the message of the error."""
@@ -218,7 +217,7 @@ class InvalidSubmission(PRAWException):
 class InvalidSubreddit(PRAWException):
     """Indicates that an invalid subreddit name was supplied."""
 
-    ERROR_TYPE = 'SUBREDDIT_NOEXIST'
+    ERROR_TYPE = "SUBREDDIT_NOEXIST"
 
     def __str__(self):
         """Return the message of the error."""
@@ -237,8 +236,9 @@ class RedirectException(PRAWException):
 
         """
         if not message:
-            message = ('Unexpected redirect '
-                       'from {0} to {1}').format(request_url, response_url)
+            message = ("Unexpected redirect " "from {0} to {1}").format(
+                request_url, response_url
+            )
         super(RedirectException, self).__init__()
         self.request_url = request_url
         self.response_url = response_url
@@ -296,7 +296,7 @@ class APIException(PRAWException):
 
     """
 
-    def __init__(self, error_type, message, field='', response=None):
+    def __init__(self, error_type, message, field="", response=None):
         """Construct an APIException.
 
         :param error_type: The error type set on reddit's end.
@@ -313,12 +313,12 @@ class APIException(PRAWException):
 
     def __str__(self):
         """Return a string containing the error message and field."""
-        if hasattr(self, 'ERROR_TYPE'):
-            return '`{0}` on field `{1}`'.format(self.message, self.field)
+        if hasattr(self, "ERROR_TYPE"):
+            return "`{0}` on field `{1}`".format(self.message, self.field)
         else:
-            return '({0}) `{1}` on field `{2}`'.format(self.error_type,
-                                                       self.message,
-                                                       self.field)
+            return "({0}) `{1}` on field `{2}`".format(
+                self.error_type, self.message, self.field
+            )
 
 
 class ExceptionList(APIException):
@@ -335,88 +335,88 @@ class ExceptionList(APIException):
 
     def __str__(self):
         """Return a string representation for all the errors."""
-        ret = '\n'
+        ret = "\n"
         for i, error in enumerate(self.errors):
-            ret += '\tError {0}) {1}\n'.format(i, six.text_type(error))
+            ret += "\tError {0}) {1}\n".format(i, six.text_type(error))
         return ret
 
 
 class AlreadySubmitted(APIException):
     """An exception to indicate that a URL was previously submitted."""
 
-    ERROR_TYPE = 'ALREADY_SUB'
+    ERROR_TYPE = "ALREADY_SUB"
 
 
 class AlreadyModerator(APIException):
     """Used to indicate that a user is already a moderator of a subreddit."""
 
-    ERROR_TYPE = 'ALREADY_MODERATOR'
+    ERROR_TYPE = "ALREADY_MODERATOR"
 
 
 class BadCSS(APIException):
     """An exception to indicate bad CSS (such as invalid) was used."""
 
-    ERROR_TYPE = 'BAD_CSS'
+    ERROR_TYPE = "BAD_CSS"
 
 
 class BadCSSName(APIException):
     """An exception to indicate a bad CSS name (such as invalid) was used."""
 
-    ERROR_TYPE = 'BAD_CSS_NAME'
+    ERROR_TYPE = "BAD_CSS_NAME"
 
 
 class BadUsername(APIException):
     """An exception to indicate an invalid username was used."""
 
-    ERROR_TYPE = 'BAD_USERNAME'
+    ERROR_TYPE = "BAD_USERNAME"
 
 
 class InvalidCaptcha(APIException):
     """An exception for when an incorrect captcha error is returned."""
 
-    ERROR_TYPE = 'BAD_CAPTCHA'
+    ERROR_TYPE = "BAD_CAPTCHA"
 
 
 class InvalidEmails(APIException):
     """An exception for when invalid emails are provided."""
 
-    ERROR_TYPE = 'BAD_EMAILS'
+    ERROR_TYPE = "BAD_EMAILS"
 
 
 class InvalidFlairTarget(APIException):
     """An exception raised when an invalid user is passed as a flair target."""
 
-    ERROR_TYPE = 'BAD_FLAIR_TARGET'
+    ERROR_TYPE = "BAD_FLAIR_TARGET"
 
 
 class InvalidInvite(APIException):
     """Raised when attempting to accept a nonexistent moderator invite."""
 
-    ERROR_TYPE = 'NO_INVITE_FOUND'
+    ERROR_TYPE = "NO_INVITE_FOUND"
 
 
 class InvalidUser(APIException):
     """An exception for when a user doesn't exist."""
 
-    ERROR_TYPE = 'USER_DOESNT_EXIST'
+    ERROR_TYPE = "USER_DOESNT_EXIST"
 
 
 class InvalidUserPass(APIException):
     """An exception for failed logins."""
 
-    ERROR_TYPE = 'WRONG_PASSWORD'
+    ERROR_TYPE = "WRONG_PASSWORD"
 
 
 class InsufficientCreddits(APIException):
     """Raised when there are not enough creddits to complete the action."""
 
-    ERROR_TYPE = 'INSUFFICIENT_CREDDITS'
+    ERROR_TYPE = "INSUFFICIENT_CREDDITS"
 
 
 class NotLoggedIn(APIException):
     """An exception for when a Reddit user isn't logged in."""
 
-    ERROR_TYPE = 'USER_REQUIRED'
+    ERROR_TYPE = "USER_REQUIRED"
 
 
 class NotModified(APIException):
@@ -438,7 +438,7 @@ class NotModified(APIException):
 
     def __str__(self):
         """Return: That page has not been modified."""
-        return 'That page has not been modified.'
+        return "That page has not been modified."
 
 
 class RateLimitExceeded(APIException):
@@ -449,27 +449,29 @@ class RateLimitExceeded(APIException):
 
     """
 
-    ERROR_TYPE = 'RATELIMIT'
+    ERROR_TYPE = "RATELIMIT"
 
 
 class SubredditExists(APIException):
     """An exception to indicate that a subreddit name is not available."""
 
-    ERROR_TYPE = 'SUBREDDIT_EXISTS'
+    ERROR_TYPE = "SUBREDDIT_EXISTS"
 
 
 class UsernameExists(APIException):
     """An exception to indicate that a username is not available."""
 
-    ERROR_TYPE = 'USERNAME_TAKEN'
+    ERROR_TYPE = "USERNAME_TAKEN"
 
 
 def _build_error_mapping():
     def predicate(obj):
-        return inspect.isclass(obj) and hasattr(obj, 'ERROR_TYPE')
+        return inspect.isclass(obj) and hasattr(obj, "ERROR_TYPE")
 
     tmp = {}
     for _, obj in inspect.getmembers(sys.modules[__name__], predicate):
         tmp[obj.ERROR_TYPE] = obj
     return tmp
+
+
 ERROR_MAPPING = _build_error_mapping()

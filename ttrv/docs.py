@@ -156,7 +156,9 @@ Replying to {{author}}'s {{type}}:
 Enter your reply below this instruction block,
 an empty message will abort the comment.
 {token}-->
-""".format(token=TOKEN)
+""".format(
+    token=TOKEN
+)
 
 COMMENT_EDIT_FILE = """<!--{token}
 Editing comment #{{id}}.
@@ -164,7 +166,9 @@ The comment is shown below, update it and save the file.
 {token}-->
 
 {{content}}
-""".format(token=TOKEN)
+""".format(
+    token=TOKEN
+)
 
 SUBMISSION_FILE = """<!--{token}
 Submitting a selfpost to {{name}}.
@@ -174,7 +178,9 @@ Enter your submission below this instruction block:
 - The following lines will be interpreted as the body
 - An empty message will abort the submission
 {token}-->
-""".format(token=TOKEN)
+""".format(
+    token=TOKEN
+)
 
 SUBMISSION_EDIT_FILE = """<!--{token}
 Editing submission #{{id}}.
@@ -182,7 +188,9 @@ The submission is shown below, update it and save the file.
 {token}-->
 
 {{content}}
-""".format(token=TOKEN)
+""".format(
+    token=TOKEN
+)
 
 MESSAGE_FILE = """<!--{token}
 Compose a new private message
@@ -192,7 +200,9 @@ Enter your message below this instruction block:
 - The second line should contain the message subject
 - Subsequent lines will be interpreted as the message body
 {token}-->
-""".format(token=TOKEN)
+""".format(
+    token=TOKEN
+)
 
 OAUTH_ACCESS_DENIED = """\
         <h1 style="color: red">Access Denied</h1><hr>

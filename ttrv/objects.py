@@ -33,7 +33,9 @@ def patch_webbrowser():
 
     # https://bugs.python.org/issue31014
     # https://github.com/michael-lazar/ttrv/issues/588
-    def register_patch(name, klass, instance=None, update_tryorder=None, preferred=False):
+    def register_patch(
+        name, klass, instance=None, update_tryorder=None, preferred=False
+    ):
         """
         Wrapper around webbrowser.register() that detects if the function was
         invoked with the legacy function signature. If so, the signature is
@@ -45,7 +47,7 @@ def patch_webbrowser():
             register(name, klass, instance, preferred=True)
         """
         if update_tryorder is not None:
-            preferred = (update_tryorder == -1)
+            preferred = update_tryorder == -1
         return webbrowser._register(name, klass, instance, preferred=preferred)
 
     if sys.version_info[:2] >= (3, 7):
@@ -53,21 +55,23 @@ def patch_webbrowser():
         webbrowser.register = register_patch
 
     # Add support for browsers that aren't defined in the python standard library
-    webbrowser.register('surf', None, webbrowser.BackgroundBrowser('surf'))
-    webbrowser.register('vimb', None, webbrowser.BackgroundBrowser('vimb'))
-    webbrowser.register('qutebrowser', None, webbrowser.BackgroundBrowser('qutebrowser'))
+    webbrowser.register("surf", None, webbrowser.BackgroundBrowser("surf"))
+    webbrowser.register("vimb", None, webbrowser.BackgroundBrowser("vimb"))
+    webbrowser.register(
+        "qutebrowser", None, webbrowser.BackgroundBrowser("qutebrowser")
+    )
 
     # Fix the opera browser, see https://github.com/michael-lazar/ttrv/issues/476.
     # By default, opera will open a new tab in the current window, which is
     # what we want to do anyway.
-    webbrowser.register('opera', None, webbrowser.BackgroundBrowser('opera'))
+    webbrowser.register("opera", None, webbrowser.BackgroundBrowser("opera"))
 
     # https://bugs.python.org/issue31348
     # Use MacOS actionscript when opening the program defined in by $BROWSER
-    if sys.platform == 'darwin' and 'BROWSER' in os.environ:
+    if sys.platform == "darwin" and "BROWSER" in os.environ:
         _userchoices = os.environ["BROWSER"].split(os.pathsep)
         for cmdline in reversed(_userchoices):
-            if cmdline in ('safari', 'firefox', 'chrome', 'default'):
+            if cmdline in ("safari", "firefox", "chrome", "default"):
                 browser = webbrowser.MacOSXOSAScript(cmdline)
                 webbrowser.register(cmdline, None, browser, update_tryorder=-1)
 
@@ -84,7 +88,7 @@ def curses_session():
         # check if it is the beginning of an escape sequence indicating a
         # special key. The default wait time is 1 second, which means that
         # http://stackoverflow.com/questions/27372068
-        os.environ['ESCDELAY'] = '25'
+        os.environ["ESCDELAY"] = "25"
 
         # Initialize curses
         stdscr = curses.initscr()
@@ -107,18 +111,18 @@ def curses_session():
             curses.start_color()
             curses.use_default_colors()
         except:
-            _logger.warning('Curses failed to initialize color support')
+            _logger.warning("Curses failed to initialize color support")
 
         # Hide the blinking cursor
         try:
             curses.curs_set(0)
         except:
-            _logger.warning('Curses failed to initialize the cursor mode')
+            _logger.warning("Curses failed to initialize the cursor mode")
 
         yield stdscr
 
     finally:
-        if 'stdscr' in locals():
+        if "stdscr" in locals():
             stdscr.keypad(0)
             curses.echo()
             curses.nocbreak()
@@ -165,15 +169,15 @@ class LoadScreen(object):
     """
 
     EXCEPTION_MESSAGES = [
-        (exceptions.TTRVError, '{0}'),
-        (praw.errors.OAuthException, 'OAuth Error'),
-        (praw.errors.OAuthScopeRequired, 'Not logged in'),
-        (praw.errors.LoginRequired, 'Not logged in'),
-        (praw.errors.InvalidCaptcha, 'Error, captcha required'),
-        (praw.errors.InvalidSubreddit, '{0.args[0]}'),
-        (praw.errors.PRAWException, '{0.__class__.__name__}'),
-        (requests.exceptions.Timeout, 'HTTP request timed out'),
-        (requests.exceptions.RequestException, '{0.__class__.__name__}'),
+        (exceptions.TTRVError, "{0}"),
+        (praw.errors.OAuthException, "OAuth Error"),
+        (praw.errors.OAuthScopeRequired, "Not logged in"),
+        (praw.errors.LoginRequired, "Not logged in"),
+        (praw.errors.InvalidCaptcha, "Error, captcha required"),
+        (praw.errors.InvalidSubreddit, "{0.args[0]}"),
+        (praw.errors.PRAWException, "{0.__class__.__name__}"),
+        (requests.exceptions.Timeout, "HTTP request timed out"),
+        (requests.exceptions.RequestException, "{0.__class__.__name__}"),
     ]
 
     def __init__(self, terminal):
@@ -187,12 +191,13 @@ class LoadScreen(object):
         self._is_running = None
 
     def __call__(
-            self,
-            message='Downloading',
-            trail='...',
-            delay=0.5,
-            interval=0.4,
-            catch_exception=True):
+        self,
+        message="Downloading",
+        trail="...",
+        delay=0.5,
+        interval=0.4,
+        catch_exception=True,
+    ):
         """
         Params:
             delay (float): Length of time that the loader will wait before
@@ -242,7 +247,7 @@ class LoadScreen(object):
 
         self.exception = e
         exc_name = type(e).__name__
-        _logger.info('Loader caught: %s - %s', exc_name, e)
+        _logger.info("Loader caught: %s - %s", exc_name, e)
 
         if isinstance(e, KeyboardInterrupt):
             # Don't need to print anything for this one, just swallow it
@@ -252,7 +257,7 @@ class LoadScreen(object):
             # Some exceptions we want to swallow and display a notification
             if isinstance(e, e_type):
                 msg = message.format(e)
-                self._terminal.show_notification(msg, style='Error')
+                self._terminal.show_notification(msg, style="Error")
                 return True
 
     def animate(self, delay, interval, message, trail):
@@ -281,7 +286,7 @@ class LoadScreen(object):
         s_row = (n_rows - 3) // 2 + v_offset
         s_col = (n_cols - message_len - 1) // 2 + h_offset
         window = curses.newwin(3, message_len + 2, s_row, s_col)
-        window.bkgd(str(' '), self._terminal.attr('NoticeLoading'))
+        window.bkgd(str(" "), self._terminal.attr("NoticeLoading"))
 
         # Animate the loading prompt until the stopping condition is triggered
         # when the context manager exits.
@@ -325,12 +330,13 @@ class Navigator(object):
     """
 
     def __init__(
-            self,
-            valid_page_cb,
-            page_index=0,
-            cursor_index=0,
-            inverted=False,
-            top_item_height=None):
+        self,
+        valid_page_cb,
+        page_index=0,
+        cursor_index=0,
+        inverted=False,
+        top_item_height=None,
+    ):
         """
         Params:
             valid_page_callback (func): This function, usually `Content.get`,
@@ -395,7 +401,7 @@ class Navigator(object):
         assert direction in (-1, 1)
 
         valid, redraw = True, False
-        forward = ((direction * self.step) > 0)
+        forward = (direction * self.step) > 0
 
         if forward:
             if self.page_index < 0:
@@ -470,12 +476,14 @@ class Navigator(object):
                 valid = True
             else:
                 # flip to the direction of movement
-                if ((direction > 0) & (self.inverted is True)) \
-                        | ((direction < 0) & (self.inverted is False)):
-                    self.page_index += (self.step * (n_windows - 1))
+                if ((direction > 0) & (self.inverted is True)) | (
+                    (direction < 0) & (self.inverted is False)
+                ):
+                    self.page_index += self.step * (n_windows - 1)
                     self.inverted = not self.inverted
-                    self.cursor_index \
-                        = (n_windows - (direction < 0)) - self.cursor_index
+                    self.cursor_index = (
+                        n_windows - (direction < 0)
+                    ) - self.cursor_index
 
                 valid = False
                 adj = 0
@@ -501,7 +509,7 @@ class Navigator(object):
         """
 
         assert n_windows >= 0
-        self.page_index += (self.step * n_windows)
+        self.page_index += self.step * n_windows
         self.cursor_index = n_windows
         self.inverted = not self.inverted
         self.top_item_height = None
@@ -569,7 +577,8 @@ class Controller(object):
                                 raise exceptions.ConfigError(
                                     "Invalid configuration! `%s` is bound to "
                                     "duplicate commands in the "
-                                    "%s" % (key, controller.__name__))
+                                    "%s" % (key, controller.__name__)
+                                )
                             # Mark the first half of the double with None so
                             # that no other command can use it
                             controller.character_map[val[0]] = None
@@ -580,7 +589,8 @@ class Controller(object):
                             raise exceptions.ConfigError(
                                 "Invalid configuration! `%s` is bound to "
                                 "duplicate commands in the "
-                                "%s" % (key, controller.__name__))
+                                "%s" % (key, controller.__name__)
+                            )
                         controller.character_map[val] = func
 
     def trigger(self, char, *args, **kwargs):
@@ -615,6 +625,7 @@ class Controller(object):
                 else:
                     cls.character_map[char] = f
             return f
+
         return inner
 
 
@@ -631,7 +642,7 @@ class Command(object):
         self.val = val.upper()
 
     def __repr__(self):
-        return 'Command(%s)' % self.val
+        return "Command(%s)" % self.val
 
     def __eq__(self, other):
         return repr(self) == repr(other)
@@ -670,8 +681,9 @@ class KeyMap(object):
         try:
             return self._keymap[command]
         except KeyError:
-            raise exceptions.ConfigError('Invalid configuration! `%s` key is '
-                                         'undefined' % command.val)
+            raise exceptions.ConfigError(
+                "Invalid configuration! `%s` key is " "undefined" % command.val
+            )
 
     @classmethod
     def parse(cls, key):
@@ -682,13 +694,13 @@ class KeyMap(object):
         try:
             if isinstance(key, int):
                 return key
-            elif re.match('[<]KEY_.*[>]', key):
+            elif re.match("[<]KEY_.*[>]", key):
                 # Curses control character
                 return getattr(curses, key[1:-1])
-            elif re.match('[<].*[>]', key):
+            elif re.match("[<].*[>]", key):
                 # Ascii control character
                 return getattr(curses.ascii, key[1:-1])
-            elif key.startswith('0x'):
+            elif key.startswith("0x"):
                 # Ascii hex code
                 return int(key, 16)
             elif len(key) == 2:
@@ -701,9 +713,11 @@ class KeyMap(object):
                     return code
                 # Python 3.3 has a curses.get_wch() function that we can use
                 # for unicode keys, but Python 2.7 is limited to ascii.
-                raise exceptions.ConfigError('Invalid configuration! `%s` is '
-                                             'not in the ascii range' % key)
+                raise exceptions.ConfigError(
+                    "Invalid configuration! `%s` is " "not in the ascii range" % key
+                )
 
         except (AttributeError, ValueError, TypeError):
-            raise exceptions.ConfigError('Invalid configuration! "%s" is not a '
-                                         'valid key' % key)
+            raise exceptions.ConfigError(
+                'Invalid configuration! "%s" is not a ' "valid key" % key
+            )
