@@ -40,6 +40,7 @@ class RateLimitHandler(object):
         instance method as it assumes `rl_lock` and `last_call` are available.
 
         """
+
         @wraps(function)
         def wrapped(cls, _rate_domain, _rate_delay, **kwargs):
             cls.rl_lock.acquire()
@@ -54,6 +55,7 @@ class RateLimitHandler(object):
                     time.sleep(delay)
                 lock_last[1] = now
                 return function(cls, **kwargs)
+
         return wrapped
 
     @classmethod
@@ -101,11 +103,12 @@ class RateLimitHandler(object):
         settings = self.http.merge_environment_settings(
             request.url, proxies, False, verify, None
         )
-        return self.http.send(request, timeout=timeout, allow_redirects=False,
-                              **settings)
+        return self.http.send(
+            request, timeout=timeout, allow_redirects=False, **settings
+        )
 
-RateLimitHandler.request = RateLimitHandler.rate_limit(
-    RateLimitHandler.request)
+
+RateLimitHandler.request = RateLimitHandler.rate_limit(RateLimitHandler.request)
 
 
 class DefaultHandler(RateLimitHandler):
@@ -125,6 +128,7 @@ class DefaultHandler(RateLimitHandler):
         available.
 
         """
+
         @wraps(function)
         def wrapped(cls, _cache_key, _cache_ignore, _cache_timeout, **kwargs):
             def clear_timeouts():
@@ -157,6 +161,7 @@ class DefaultHandler(RateLimitHandler):
                 cls.timeouts[_cache_key] = timer()
                 cls.cache[_cache_key] = result
                 return result
+
         return wrapped
 
     @classmethod
@@ -184,13 +189,15 @@ class DefaultHandler(RateLimitHandler):
                     del cls.cache[key]
                     del cls.timeouts[key]
         return retval
+
+
 DefaultHandler.request = DefaultHandler.with_cache(RateLimitHandler.request)
 
 
 class MultiprocessHandler(object):
     """A PRAW handler to interact with the PRAW multi-process server."""
 
-    def __init__(self, host='localhost', port=10101):
+    def __init__(self, host="localhost", port=10101):
         """Construct an instance of the MultiprocessHandler."""
         self.host = host
         self.port = port
@@ -202,7 +209,7 @@ class MultiprocessHandler(object):
         read_attempts = 0  # For reading from socket
         while retval is None:  # Evict can return False
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock_fp = sock.makefile('rwb')  # Used for pickle
+            sock_fp = sock.makefile("rwb")  # Used for pickle
             try:
                 sock.connect((self.host, self.port))
                 cPickle.dump(kwargs, sock_fp, cPickle.HIGHEST_PROTOCOL)
@@ -212,18 +219,23 @@ class MultiprocessHandler(object):
                 exc_type, exc, _ = sys.exc_info()
                 socket_error = exc_type is socket.error
                 if socket_error and exc.errno == 111:  # Connection refused
-                    sys.stderr.write('Cannot connect to multiprocess server. I'
-                                     's it running? Retrying in {0} seconds.\n'
-                                     .format(delay_time))
+                    sys.stderr.write(
+                        "Cannot connect to multiprocess server. I"
+                        "s it running? Retrying in {0} seconds.\n".format(delay_time)
+                    )
                     time.sleep(delay_time)
                     delay_time = min(64, delay_time * 2)
                 elif exc_type is EOFError or socket_error and exc.errno == 104:
                     # Failure during socket READ
                     if read_attempts >= 3:
-                        raise ClientException('Successive failures reading '
-                                              'from the multiprocess server.')
-                    sys.stderr.write('Lost connection with multiprocess server'
-                                     ' during read. Trying again.\n')
+                        raise ClientException(
+                            "Successive failures reading "
+                            "from the multiprocess server."
+                        )
+                    sys.stderr.write(
+                        "Lost connection with multiprocess server"
+                        " during read. Trying again.\n"
+                    )
                     read_attempts += 1
                 else:
                     raise
@@ -236,8 +248,8 @@ class MultiprocessHandler(object):
 
     def evict(self, urls):
         """Forward the eviction to the server and return its response."""
-        return self._relay(method='evict', urls=urls)
+        return self._relay(method="evict", urls=urls)
 
     def request(self, **kwargs):
         """Forward the request to the server and return its HTTP response."""
-        return self._relay(method='request', **kwargs)
+        return self._relay(method="request", **kwargs)

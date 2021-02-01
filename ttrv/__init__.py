@@ -27,7 +27,7 @@ from __future__ import unicode_literals
 
 from .__version__ import __version__
 
-__title__ = 'Tilde Terminal Reddit Viewer'
-__author__ = 'tildeclub'
-__license__ = 'The MIT License (MIT)'
-__copyright__ = '(c) 2019 tilde.club'
+__title__ = "Tilde Terminal Reddit Viewer"
+__author__ = "tildeclub"
+__license__ = "The MIT License (MIT)"
+__copyright__ = "(c) 2019 tilde.club"

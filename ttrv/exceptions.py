@@ -31,7 +31,7 @@ class NoSubmissionsError(TTRVError):
 
     def __init__(self, name):
         self.name = name
-        message = '`{0}` has no submissions'.format(name)
+        message = "`{0}` has no submissions".format(name)
         super(NoSubmissionsError, self).__init__(message)
 
 

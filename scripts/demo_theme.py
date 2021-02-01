@@ -32,33 +32,31 @@ except ImportError:
 
 
 def initialize_vcr():
-
     def auth_matcher(r1, r2):
-        return (r1.headers.get('authorization') ==
-                r2.headers.get('authorization'))
+        return r1.headers.get("authorization") == r2.headers.get("authorization")
 
     def uri_with_query_matcher(r1, r2):
-        p1,  p2 = urlparse(r1.uri), urlparse(r2.uri)
-        return (p1[:3] == p2[:3] and
-                parse_qs(p1.query, True) == parse_qs(p2.query, True))
+        p1, p2 = urlparse(r1.uri), urlparse(r2.uri)
+        return p1[:3] == p2[:3] and parse_qs(p1.query, True) == parse_qs(p2.query, True)
 
-    cassette_dir = os.path.join(os.path.dirname(__file__), 'cassettes')
+    cassette_dir = os.path.join(os.path.dirname(__file__), "cassettes")
     if not os.path.exists(cassette_dir):
         os.makedirs(cassette_dir)
 
-    filename = os.path.join(cassette_dir, 'demo_theme.yaml')
+    filename = os.path.join(cassette_dir, "demo_theme.yaml")
     if os.path.exists(filename):
-        record_mode = 'none'
+        record_mode = "none"
     else:
-        record_mode = 'once'
+        record_mode = "once"
     vcr = VCR(
         record_mode=record_mode,
-        filter_headers=[('Authorization', '**********')],
-        filter_post_data_parameters=[('refresh_token', '**********')],
-        match_on=['method', 'uri_with_query', 'auth', 'body'],
-        cassette_library_dir=cassette_dir)
-    vcr.register_matcher('auth', auth_matcher)
-    vcr.register_matcher('uri_with_query', uri_with_query_matcher)
+        filter_headers=[("Authorization", "**********")],
+        filter_post_data_parameters=[("refresh_token", "**********")],
+        match_on=["method", "uri_with_query", "auth", "body"],
+        cassette_library_dir=cassette_dir,
+    )
+    vcr.register_matcher("auth", auth_matcher)
+    vcr.register_matcher("uri_with_query", uri_with_query_matcher)
 
     return vcr
 
@@ -96,33 +94,33 @@ def draw_screen(stdscr, reddit, config, theme, oauth):
     term.set_theme(theme)
     oauth.term = term
 
-    url = 'https://www.reddit.com/r/Python/comments/4dy7xr'
-    with term.loader('Loading'):
+    url = "https://www.reddit.com/r/Python/comments/4dy7xr"
+    with term.loader("Loading"):
         page = SubmissionPage(reddit, term, config, oauth, url=url)
 
     # Tweak the data in order to demonstrate the full range of settings
     data = page.content.get(-1)
-    data['object'].link_flair_text = 'flair'
-    data['object'].gilded = 1
-    data['object'].over_18 = True
-    data['object'].saved = True
-    data.update(page.content.strip_praw_submission(data['object']))
+    data["object"].link_flair_text = "flair"
+    data["object"].gilded = 1
+    data["object"].over_18 = True
+    data["object"].saved = True
+    data.update(page.content.strip_praw_submission(data["object"]))
     data = page.content.get(0)
-    data['object'].author.name = 'kafoozalum'
-    data['object'].stickied = True
-    data['object'].author_flair_text = 'flair'
-    data['object'].likes = True
-    data.update(page.content.strip_praw_comment(data['object']))
+    data["object"].author.name = "kafoozalum"
+    data["object"].stickied = True
+    data["object"].author_flair_text = "flair"
+    data["object"].likes = True
+    data.update(page.content.strip_praw_comment(data["object"]))
     data = page.content.get(1)
-    data['object'].saved = True
-    data['object'].likes = False
-    data['object'].score_hidden = True
-    data['object'].gilded = 1
-    data.update(page.content.strip_praw_comment(data['object']))
+    data["object"].saved = True
+    data["object"].likes = False
+    data["object"].score_hidden = True
+    data["object"].gilded = 1
+    data.update(page.content.strip_praw_comment(data["object"]))
     data = page.content.get(2)
-    data['object'].author.name = 'kafoozalum'
-    data['object'].body = data['object'].body[:100]
-    data.update(page.content.strip_praw_comment(data['object']))
+    data["object"].author.name = "kafoozalum"
+    data["object"].body = data["object"].body[:100]
+    data.update(page.content.strip_praw_comment(data["object"]))
     page.content.toggle(9)
     page.content.toggle(5)
     page.draw()
@@ -135,24 +133,24 @@ def draw_screen(stdscr, reddit, config, theme, oauth):
     term.set_theme(theme)
     oauth.term = term
 
-    with term.loader('Loading'):
-        page = SubredditPage(reddit, term, config, oauth, '/u/saved')
+    with term.loader("Loading"):
+        page = SubredditPage(reddit, term, config, oauth, "/u/saved")
 
     # Tweak the data in order to demonstrate the full range of settings
     data = page.content.get(3)
-    data['object'].hide_score = True
-    data['object'].author = None
-    data['object'].saved = False
-    data.update(page.content.strip_praw_submission(data['object']))
-    page.content.order = 'rising'
+    data["object"].hide_score = True
+    data["object"].author = None
+    data["object"].saved = False
+    data.update(page.content.strip_praw_submission(data["object"]))
+    page.content.order = "rising"
     page.nav.cursor_index = 1
     page.draw()
 
     term.pause_getch = True
     term.getch = MethodType(notification_getch, term)
-    thread = threading.Thread(target=term.show_notification,
-                              args=('Success',),
-                              kwargs={'style': 'Success'})
+    thread = threading.Thread(
+        target=term.show_notification, args=("Success",), kwargs={"style": "Success"}
+    )
     thread.start()
     threads.append((thread, term))
 
@@ -164,16 +162,16 @@ def draw_screen(stdscr, reddit, config, theme, oauth):
     term.set_theme(theme)
     oauth.term = term
 
-    with term.loader('Loading'):
-        page = SubscriptionPage(reddit, term, config, oauth, 'popular')
+    with term.loader("Loading"):
+        page = SubscriptionPage(reddit, term, config, oauth, "popular")
     page.nav.cursor_index = 1
     page.draw()
 
     term.pause_getch = True
     term.getch = MethodType(notification_getch, term)
-    thread = threading.Thread(target=term.show_notification,
-                              args=('Error',),
-                              kwargs={'style': 'Error'})
+    thread = threading.Thread(
+        target=term.show_notification, args=("Error",), kwargs={"style": "Error"}
+    )
     thread.start()
     threads.append((thread, term))
 
@@ -185,16 +183,16 @@ def draw_screen(stdscr, reddit, config, theme, oauth):
     term.set_theme(theme)
     oauth.term = term
 
-    with term.loader('Loading'):
-        page = SubscriptionPage(reddit, term, config, oauth, 'multireddit')
+    with term.loader("Loading"):
+        page = SubscriptionPage(reddit, term, config, oauth, "multireddit")
     page.nav.cursor_index = 1
     page.draw()
 
     term.pause_getch = True
     term.getch = MethodType(notification_getch, term)
-    thread = threading.Thread(target=term.show_notification,
-                              args=('Info',),
-                              kwargs={'style': 'Info'})
+    thread = threading.Thread(
+        target=term.show_notification, args=("Info",), kwargs={"style": "Info"}
+    )
     thread.start()
     threads.append((thread, term))
 
@@ -202,7 +200,7 @@ def draw_screen(stdscr, reddit, config, theme, oauth):
     term.set_theme(theme)
     term.pause_getch = True
     term.getch = MethodType(prompt_getch, term)
-    thread = threading.Thread(target=term.prompt_y_or_n, args=('Prompt: ',))
+    thread = threading.Thread(target=term.prompt_y_or_n, args=("Prompt: ",))
     thread.start()
     threads.append((thread, term))
 
@@ -213,7 +211,7 @@ def draw_screen(stdscr, reddit, config, theme, oauth):
 
 def main():
 
-    locale.setlocale(locale.LC_ALL, '')
+    locale.setlocale(locale.LC_ALL, "")
 
     if len(sys.argv) > 1:
         theme = Theme.from_name(sys.argv[1])
@@ -221,23 +219,26 @@ def main():
         theme = Theme()
 
     vcr = initialize_vcr()
-    with vcr.use_cassette('demo_theme.yaml') as cassette, \
-            curses_session() as stdscr:
+    with vcr.use_cassette("demo_theme.yaml") as cassette, curses_session() as stdscr:
 
         config = Config()
-        if vcr.record_mode == 'once':
+        if vcr.record_mode == "once":
             config.load_refresh_token()
         else:
-            config.refresh_token = 'mock_refresh_token'
+            config.refresh_token = "mock_refresh_token"
 
-        reddit = praw.Reddit(user_agent='TTRV Theme Demo',
-                             decode_html_entities=False,
-                             disable_update_check=True)
+        reddit = praw.Reddit(
+            user_agent="TTRV Theme Demo",
+            decode_html_entities=False,
+            disable_update_check=True,
+        )
         reddit.config.api_request_delay = 0
 
-        config.history.add('https://api.reddit.com/comments/6llvsl/_/djutc3s')
-        config.history.add('http://i.imgur.com/Z9iGKWv.gifv')
-        config.history.add('https://www.reddit.com/r/Python/comments/6302cj/rpython_official_job_board/')
+        config.history.add("https://api.reddit.com/comments/6llvsl/_/djutc3s")
+        config.history.add("http://i.imgur.com/Z9iGKWv.gifv")
+        config.history.add(
+            "https://www.reddit.com/r/Python/comments/6302cj/rpython_official_job_board/"
+        )
 
         term = Terminal(stdscr, config)
         term.set_theme()
@@ -260,7 +261,7 @@ def main():
                 term.pause_getch = False
                 thread.join()
 
-            if vcr.record_mode == 'once':
+            if vcr.record_mode == "once":
                 break
             else:
                 cassette.play_counts = Counter()
@@ -280,4 +281,3 @@ def main():
 
 
 sys.exit(main())
-

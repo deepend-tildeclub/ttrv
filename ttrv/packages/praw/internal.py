@@ -26,29 +26,40 @@ import sys
 from requests import Request, codes, exceptions
 from requests.compat import urljoin
 from .decorators import restrict_access
-from .errors import (ClientException, HTTPException, Forbidden, NotFound,
-                     InvalidSubreddit, OAuthException,
-                     OAuthInsufficientScope, OAuthInvalidToken,
-                     RedirectException)
+from .errors import (
+    ClientException,
+    HTTPException,
+    Forbidden,
+    NotFound,
+    InvalidSubreddit,
+    OAuthException,
+    OAuthInsufficientScope,
+    OAuthInvalidToken,
+    RedirectException,
+)
 from warnings import warn
+
 try:
     from OpenSSL import __version__ as _opensslversion
-    _opensslversionlist = [int(minor) if minor.isdigit() else minor
-                           for minor in _opensslversion.split('.')]
+
+    _opensslversionlist = [
+        int(minor) if minor.isdigit() else minor for minor in _opensslversion.split(".")
+    ]
 except ImportError:
     _opensslversionlist = [0, 15]
 
 MIN_PNG_SIZE = 67
 MIN_JPEG_SIZE = 128
 MAX_IMAGE_SIZE = 512000
-JPEG_HEADER = b'\xff\xd8\xff'
-PNG_HEADER = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
-RE_REDIRECT = re.compile('(rand(om|nsfw))|about/sticky')
+JPEG_HEADER = b"\xff\xd8\xff"
+PNG_HEADER = b"\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"
+RE_REDIRECT = re.compile("(rand(om|nsfw))|about/sticky")
 
 
-def _get_redditor_listing(subpath=''):
+def _get_redditor_listing(subpath=""):
     """Return function to generate Redditor listings."""
-    def _listing(self, sort='new', time='all', *args, **kwargs):
+
+    def _listing(self, sort="new", time="all", *args, **kwargs):
         """Return a get_content generator for some RedditContentObject type.
 
         :param sort: Specify the sort order of the results if applicable
@@ -61,17 +72,19 @@ def _get_redditor_listing(subpath=''):
         :meth:`.get_content`. Note: the `url` parameter cannot be altered.
 
         """
-        kwargs.setdefault('params', {})
-        kwargs['params'].setdefault('sort', sort)
-        kwargs['params'].setdefault('t', time)
+        kwargs.setdefault("params", {})
+        kwargs["params"].setdefault("sort", sort)
+        kwargs["params"].setdefault("t", time)
         url = urljoin(self._url, subpath)  # pylint: disable=W0212
         return self.reddit_session.get_content(url, *args, **kwargs)
+
     return _listing
 
 
-def _get_sorter(subpath='', **defaults):
+def _get_sorter(subpath="", **defaults):
     """Return function to generate specific subreddit Submission listings."""
-    @restrict_access(scope='read')
+
+    @restrict_access(scope="read")
     def _sorted(self, *args, **kwargs):
         """Return a get_content generator for some RedditContentObject type.
 
@@ -79,31 +92,33 @@ def _get_sorter(subpath='', **defaults):
         :meth:`.get_content`. Note: the `url` parameter cannot be altered.
 
         """
-        if not kwargs.get('params'):
-            kwargs['params'] = {}
+        if not kwargs.get("params"):
+            kwargs["params"] = {}
         for key, value in six.iteritems(defaults):
-            kwargs['params'].setdefault(key, value)
+            kwargs["params"].setdefault(key, value)
         url = urljoin(self._url, subpath)  # pylint: disable=W0212
         return self.reddit_session.get_content(url, *args, **kwargs)
+
     return _sorted
 
 
 def _image_type(image):
     size = os.path.getsize(image.name)
     if size < MIN_PNG_SIZE:
-        raise ClientException('png image is too small.')
+        raise ClientException("png image is too small.")
     if size > MAX_IMAGE_SIZE:
-        raise ClientException('`image` is too big. Max: {0} bytes'
-                              .format(MAX_IMAGE_SIZE))
+        raise ClientException(
+            "`image` is too big. Max: {0} bytes".format(MAX_IMAGE_SIZE)
+        )
     first_bytes = image.read(MIN_PNG_SIZE)
     image.seek(0)
     if first_bytes.startswith(PNG_HEADER):
-        return 'png'
+        return "png"
     elif first_bytes.startswith(JPEG_HEADER):
         if size < MIN_JPEG_SIZE:
-            raise ClientException('jpeg image is too small.')
-        return 'jpg'
-    raise ClientException('`image` must be either jpg or png.')
+            raise ClientException("jpeg image is too small.")
+        return "jpg"
+    raise ClientException("`image` must be either jpg or png.")
 
 
 def _modify_relationship(relationship, unlink=False, is_sub=False):
@@ -114,54 +129,55 @@ def _modify_relationship(relationship, unlink=False, is_sub=False):
 
     """
     # The API uses friend and unfriend to manage all of these relationships.
-    url_key = 'unfriend' if unlink else 'friend'
+    url_key = "unfriend" if unlink else "friend"
 
-    if relationship == 'friend':
-        access = {'scope': None, 'login': True}
-    elif relationship == 'moderator':
-        access = {'scope': 'modothers'}
-    elif relationship in ['banned', 'contributor', 'muted']:
-        access = {'scope': 'modcontributors'}
-    elif relationship in ['wikibanned', 'wikicontributor']:
-        access = {'scope': ['modcontributors', 'modwiki']}
+    if relationship == "friend":
+        access = {"scope": None, "login": True}
+    elif relationship == "moderator":
+        access = {"scope": "modothers"}
+    elif relationship in ["banned", "contributor", "muted"]:
+        access = {"scope": "modcontributors"}
+    elif relationship in ["wikibanned", "wikicontributor"]:
+        access = {"scope": ["modcontributors", "modwiki"]}
     else:
-        access = {'scope': None, 'mod': True}
+        access = {"scope": None, "mod": True}
 
     @restrict_access(**access)
     def do_relationship(thing, user, **kwargs):
-        data = {'name': six.text_type(user),
-                'type': relationship}
+        data = {"name": six.text_type(user), "type": relationship}
         data.update(kwargs)
         if is_sub:
-            data['r'] = six.text_type(thing)
+            data["r"] = six.text_type(thing)
         else:
-            data['container'] = thing.fullname
+            data["container"] = thing.fullname
 
         session = thing.reddit_session
-        if relationship == 'moderator':
-            session.evict(session.config['moderators'].format(
-                subreddit=six.text_type(thing)))
+        if relationship == "moderator":
+            session.evict(
+                session.config["moderators"].format(subreddit=six.text_type(thing))
+            )
         url = session.config[url_key]
         return session.request_json(url, data=data)
+
     return do_relationship
 
 
-def _prepare_request(reddit_session, url, params, data, auth, files,
-                     method=None):
+def _prepare_request(reddit_session, url, params, data, auth, files, method=None):
     """Return a requests Request object that can be "prepared"."""
     # Requests using OAuth for authorization must switch to using the oauth
     # domain.
-    if getattr(reddit_session, '_use_oauth', False):
-        bearer = 'bearer {0}'.format(reddit_session.access_token)
-        headers = {'Authorization': bearer}
+    if getattr(reddit_session, "_use_oauth", False):
+        bearer = "bearer {0}".format(reddit_session.access_token)
+        headers = {"Authorization": bearer}
         config = reddit_session.config
         for prefix in (config.api_url, config.permalink_url):
             if url.startswith(prefix):
                 if config.log_requests >= 1:
-                    msg = 'substituting {0} for {1} in url\n'.format(
-                        config.oauth_url, prefix)
+                    msg = "substituting {0} for {1} in url\n".format(
+                        config.oauth_url, prefix
+                    )
                     sys.stderr.write(msg)
-                url = config.oauth_url + url[len(prefix):]
+                url = config.oauth_url + url[len(prefix) :]
                 break
     else:
         headers = {}
@@ -170,24 +186,30 @@ def _prepare_request(reddit_session, url, params, data, auth, files,
     if method:
         pass
     elif data or files:
-        method = 'POST'
+        method = "POST"
     else:
-        method = 'GET'
+        method = "GET"
 
     # Log the request if logging is enabled
     if reddit_session.config.log_requests >= 1:
-        sys.stderr.write('{0}: {1}\n'.format(method, url))
+        sys.stderr.write("{0}: {1}\n".format(method, url))
     if reddit_session.config.log_requests >= 2:
         if params:
-            sys.stderr.write('params: {0}\n'.format(params))
+            sys.stderr.write("params: {0}\n".format(params))
         if data:
-            sys.stderr.write('data: {0}\n'.format(data))
+            sys.stderr.write("data: {0}\n".format(data))
         if auth:
-            sys.stderr.write('auth: {0}\n'.format(auth))
+            sys.stderr.write("auth: {0}\n".format(auth))
     # Prepare request
-    request = Request(method=method, url=url, headers=headers, params=params,
-                      auth=auth, cookies=reddit_session.http.cookies)
-    if method == 'GET':
+    request = Request(
+        method=method,
+        url=url,
+        headers=headers,
+        params=params,
+        auth=auth,
+        cookies=reddit_session.http.cookies,
+    )
+    if method == "GET":
         return request
     # Most POST requests require adding `api_type` and `uh` to the data.
     if data is True:
@@ -195,11 +217,11 @@ def _prepare_request(reddit_session, url, params, data, auth, files,
 
     if isinstance(data, dict):
         if not auth:
-            data.setdefault('api_type', 'json')
+            data.setdefault("api_type", "json")
             if reddit_session.modhash:
-                data.setdefault('uh', reddit_session.modhash)
+                data.setdefault("uh", reddit_session.modhash)
     else:
-        request.headers.setdefault('Content-Type', 'application/json')
+        request.headers.setdefault("Content-Type", "application/json")
 
     request.data = data
     request.files = files
@@ -214,11 +236,10 @@ def _raise_redirect_exceptions(response):
     """
     if response.status_code not in [301, 302, 307]:
         return None
-    new_url = urljoin(response.url, response.headers['location'])
-    if 'reddits/search' in new_url:  # Handle non-existent subreddit
-        subreddit = new_url.rsplit('=', 1)[1]
-        raise InvalidSubreddit('`{0}` is not a valid subreddit'
-                               .format(subreddit))
+    new_url = urljoin(response.url, response.headers["location"])
+    if "reddits/search" in new_url:  # Handle non-existent subreddit
+        subreddit = new_url.rsplit("=", 1)[1]
+        raise InvalidSubreddit("`{0}` is not a valid subreddit".format(subreddit))
     elif not RE_REDIRECT.search(response.url):
         raise RedirectException(response.url, new_url)
     return new_url
@@ -226,12 +247,12 @@ def _raise_redirect_exceptions(response):
 
 def _raise_response_exceptions(response):
     """Raise specific errors on some status codes."""
-    if not response.ok and 'www-authenticate' in response.headers:
-        msg = response.headers['www-authenticate']
-        if 'insufficient_scope' in msg:
-            raise OAuthInsufficientScope('insufficient_scope', response.url)
-        elif 'invalid_token' in msg:
-            raise OAuthInvalidToken('invalid_token', response.url)
+    if not response.ok and "www-authenticate" in response.headers:
+        msg = response.headers["www-authenticate"]
+        if "insufficient_scope" in msg:
+            raise OAuthInsufficientScope("insufficient_scope", response.url)
+        elif "invalid_token" in msg:
+            raise OAuthInvalidToken("invalid_token", response.url)
         else:
             raise OAuthException(msg, response.url)
 
@@ -253,19 +274,21 @@ def _to_reddit_list(arg):
     representation of an object. Either given as a string or as an object that
     is then converted to its string representation.
     """
-    if (isinstance(arg, six.string_types) or not (
-            hasattr(arg, "__getitem__") or hasattr(arg, "__iter__"))):
+    if isinstance(arg, six.string_types) or not (
+        hasattr(arg, "__getitem__") or hasattr(arg, "__iter__")
+    ):
         return six.text_type(arg)
     else:
-        return ','.join(six.text_type(a) for a in arg)
+        return ",".join(six.text_type(a) for a in arg)
 
 
 def _warn_pyopenssl():
     """Warn the user against faulty versions of pyOpenSSL."""
     if _opensslversionlist < [0, 15]:  # versions >= 0.15 are fine
-        warn(RuntimeWarning(
-            "pyOpenSSL {0} may be incompatible with praw if validating"
-            "ssl certificates, which is on by default.\nSee https://"
-            "github.com/praw/pull/625 for more information".format(
-                _opensslversion)
-        ))
+        warn(
+            RuntimeWarning(
+                "pyOpenSSL {0} may be incompatible with praw if validating"
+                "ssl certificates, which is on by default.\nSee https://"
+                "github.com/praw/pull/625 for more information".format(_opensslversion)
+            )
+        )

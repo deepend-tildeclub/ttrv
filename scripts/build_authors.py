@@ -14,7 +14,7 @@ import requests
 
 _filepath = os.path.dirname(os.path.relpath(__file__))
 
-FILENAME = os.path.abspath(os.path.join(_filepath, '..', 'AUTHORS.rst'))
+FILENAME = os.path.abspath(os.path.join(_filepath, "..", "AUTHORS.rst"))
 URL = "https://api.github.com/repos/tildeclub/ttrv/contributors?per_page=1000"
 HEADER = """\
 ================
@@ -31,7 +31,7 @@ def main():
     logging.captureWarnings(True)
 
     # Request the list of contributors
-    print('GET {}'.format(URL))
+    print("GET {}".format(URL))
     resp = requests.get(URL)
     contributors = resp.json()
 
@@ -40,20 +40,20 @@ def main():
         time.sleep(1.0)
 
         # Request each contributor individually to get the full name
-        print('GET {}'.format(contributor['url']))
-        resp = requests.get(contributor['url'])
+        print("GET {}".format(contributor["url"]))
+        resp = requests.get(contributor["url"])
         user = resp.json()
 
-        name = user.get('name') or contributor['login']
-        url = user['html_url']
-        lines.append('* `{} <{}>`_'.format(name, url))
+        name = user.get("name") or contributor["login"]
+        url = user["html_url"]
+        lines.append("* `{} <{}>`_".format(name, url))
 
-    print('Writing to {}'.format(FILENAME))
-    text = HEADER + '\n'.join(lines)
-    text = text.encode('utf-8')
-    with open(FILENAME, 'wb') as fp:
+    print("Writing to {}".format(FILENAME))
+    text = HEADER + "\n".join(lines)
+    text = text.encode("utf-8")
+    with open(FILENAME, "wb") as fp:
         fp.write(text)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
